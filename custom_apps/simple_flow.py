@@ -88,7 +88,7 @@ def quick_advection(field, velocity_field, dt, type_id="default"):
                 
                 value1 = values1[j][i][0]
                 value2 = values2[j][i][0]
-
+  
                 duUdx = (u1 * value1 - u2 * value2) / deltaX
                 dvUdy = (v1 * value1 - v2 * value2) / deltaY
                 derivate_field_x[j][i] = np.array([duUdx])
