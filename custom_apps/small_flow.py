@@ -71,7 +71,6 @@ def quick_advection(field, velocity_field, dt, type="density"):
         print("Density Data:\n", density_data)
         print("Staggered Density Grid X: ", staggered_density_x)
         print("Staggered Density Grid Y: ", staggered_density_y)
-        print("=====================================================\n")
 
         # Calculate partial derviates dup/dx, dvp/dy and finally dp/dt with velocity (u, v) and density p
         derivates_grid = np.zeros((dim_y, dim_x))
@@ -105,6 +104,7 @@ def quick_advection(field, velocity_field, dt, type="density"):
                 # Perform Explicit Euler Step
                 density_data_step[j][i][0] += derivates_grid[j][i] * dt
 
+        print("=====================================================\n")
         return CenteredGrid([density_data_step])
         #raise NotImplementedError("QUICK for Density is WIP!")
 
@@ -132,7 +132,7 @@ class SimpleFlow(App):
 
         self.physics = SimpleFlowPhysics()
         #self.physics = IncompressibleFlow()
-        self.timestep = 1.0
+        self.timestep = 0.05
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:3, 0:3], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
