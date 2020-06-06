@@ -72,6 +72,53 @@ def create_smoke(domain, density=0.0, velocity=0.0, buoyancy_factor=0.1):
     return (velocity_field, density_field, buoyancy_state), (velocity_physics, density_physics, buoyancy_physics)
 
 
+
+### =========================== INSERTED FOR TESTING =========================== ###
+class SimpleFlowPhysics(Physics):
+    """
+    Physics modelling the incompressible Navier-Stokes equations.
+    Supports buoyancy proportional to the marker density.
+    Supports obstacles, density effects, velocity effects, global gravity.
+    """
+
+    def __init__(self, pressure_solver=None, make_input_divfree=False, make_output_divfree=True, conserve_density=True):
+        print("G'Day! I am Simple Flow Physics!")
+        Physics.__init__(self, [StateDependency('obstacles', 'obstacle'),
+                                StateDependency('gravity', 'gravity', single_state=True),
+                                StateDependency('density_effects', 'density_effect', blocking=True),
+                                StateDependency('velocity_effects', 'velocity_effect', blocking=True)])
+        self.pressure_solver = pressure_solver
+        self.make_input_divfree = make_input_divfree
+        self.make_output_divfree = make_output_divfree
+        self.conserve_density = conserve_density
+
+
+    def step(self, fluid, dt=1.0, obstacles=(), gravity=Gravity(), density_effects=(), velocity_effects=()):
+        print("Executing modified step()-function!")
+        # pylint: disable-msg = arguments-differ
+        gravity = gravity_tensor(gravity, fluid.rank)
+        velocity = fluid.velocity
+        density = fluid.density
+        #if self.make_input_divfree:
+        #    velocity, fluid.solve_info = divergence_free(velocity, fluid.domain, obstacles, pressure_solver=self.pressure_solver, return_info=True)
+        # --- Advection ---
+        #density = advect.semi_lagrangian(density, velocity, dt=dt)
+        #velocity = advect.semi_lagrangian(velocity, velocity, dt=dt)
+        #if self.conserve_density and np.all(Material.solid(fluid.domain.boundaries)):
+        #    density = density.normalized(fluid.density)
+        # --- Effects ---
+        #for effect in density_effects:
+        #    density = effect_applied(effect, density, dt)
+        #for effect in velocity_effects:
+        #    velocity = effect_applied(effect, velocity, dt)
+        #velocity += buoyancy(fluid.density, gravity, fluid.buoyancy_factor) * dt
+        # --- Pressure solve ---
+        #if self.make_output_divfree:
+        #    velocity, fluid.solve_info = divergence_free(velocity, fluid.domain, obstacles, pressure_solver=self.pressure_solver, return_info=True)
+        return fluid.copied_with(density=density, velocity=velocity, age=fluid.age + dt)
+### =========================== END INSERTED =========================== ###
+
+
 class IncompressibleFlow(Physics):
     """
 Physics modelling the incompressible Navier-Stokes equations.
