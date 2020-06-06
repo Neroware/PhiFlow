@@ -159,11 +159,12 @@ class SimpleFlow(App):
 
         self.physics = SimpleFlowPhysics()
         #self.physics = IncompressibleFlow()
-        self.timestep = 0.25
+        self.timestep = 0.1
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
-        fluid.density = self._get_density_grid()
+        fluid.density = self._get_density_grid_2()
+        #fluid.density = self._get_density_grid()
         #world.add(ConstantVelocity(box[0:100, 0:100], velocity=(1, 0)))
 
         self.add_field('Velocity', lambda: fluid.velocity)
@@ -209,6 +210,24 @@ class SimpleFlow(App):
         return CenteredGrid(density_array)
 
 
+    def _get_density_grid_2(self):
+        """
+        Generates a single spot in the center of the grid
+        """
+        data = []
+        for y in range(0, RESOLUTION[0]):
+            next = []
+            for x in range(0, RESOLUTION[0]):
+                if(x == 50):
+                    next.append([1.0])
+                else:
+                    next.append([0.0])
+            data.append(next)
+
+        density_array = np.array([data])
+        return CenteredGrid(density_array)
+
+
     def _get_velocity_grid(self):
         """
         Generiert a StaggeredGrid, with constant velocity u = (0, 1)
@@ -217,7 +236,7 @@ class SimpleFlow(App):
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                next.append([-1.0, 0.0])
+                next.append([0.0, 1.0])
             data.append(next)
 
         velocity_grid = np.array([data])
