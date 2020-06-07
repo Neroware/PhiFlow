@@ -102,8 +102,9 @@ class SimpleFlowPhysics(Physics):
         #if self.make_input_divfree:
         #    velocity, fluid.solve_info = divergence_free(velocity, fluid.domain, obstacles, pressure_solver=self.pressure_solver, return_info=True)
         # --- Advection ---
-        #density = advect.semi_lagrangian(density, velocity, dt=dt)
-        #velocity = advect.semi_lagrangian(velocity, velocity, dt=dt)
+        density = advect.quick_advection(density, velocity, dt, type="density")
+        #velocity = advect.quick_advection(velocity, velocity, dt, type="velocity")
+
         #if self.conserve_density and np.all(Material.solid(fluid.domain.boundaries)):
         #    density = density.normalized(fluid.density)
         # --- Effects ---
