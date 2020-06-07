@@ -67,13 +67,16 @@ Lagrangian advection of particles.
 prev_step_derivates = {}
 def quick_advection(field, velocity_field, dt, type="density"):
     """
-    QUICK Advection Scheme
+    QUICK Advection Scheme with Explicit Euler Step
     :param field: SampledField with any number of components
     :type field: SampledField
     :param velocity: Vector field
     :type velocity: Field
     :param dt: time increment
     :return: SampledField with same data as `field` but advected points
+    
+    (i) This function only works in Numpy-Mode, for TensorFlow a CUDA module will be used
+    Too large timesteps cause instability!
     """
 
     def quick_advection_density(density_field, velodity_field, dt):
@@ -188,7 +191,6 @@ def quick_advection(field, velocity_field, dt, type="density"):
 
     def quick_advection_velocity(velocity_field, dt):
         raise NotImplementedError("QUICK for Velocity is WIP!")
-
 
     if(type == "density"):
         return quick_advection_density(field, velocity_field, dt)
