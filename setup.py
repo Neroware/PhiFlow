@@ -209,6 +209,42 @@ class CudaCommand(distutils.cmd.Command):
             else:
                 raise e
 
+
+        # Build the QUICK Advection CUDA Kernels
+        subprocess.check_call(
+            [
+                self.nvcc,
+                '-std=c++11',
+                '-c',
+                '-o',
+                os.path.join(build_path, 'quick_advection_op.cu.o'),
+                os.path.join(src_path, 'quick_advection_op.cu.cc'),
+                '-x',
+                'cu',
+                '-Xcompiler',
+                '-fPIC'
+            ]
+            + tf_cflags
+        )
+
+        # Build the QUICK Advection Custom Op
+        subprocess.check_call(
+            [
+                self.gcc_4_8,
+                '-std=c++11',
+                '-shared',
+                '-o',
+                os.path.join(build_path, 'quick_advection_op.so'),
+                os.path.join(src_path, 'quick_advection_op.cc'),
+                os.path.join(build_path, 'quick_advection_op.cu.o'),
+                '-fPIC'
+            ]
+            + tf_cflags
+            + tf_lflags
+            + ['-L/usr/local/cuda/lib64/','-lcudart']
+        )
+
+
     def initialize_options(self):
         self.gcc = 'gcc'
         self.gcc_4_8 = 'g++-4.8'
