@@ -11,23 +11,23 @@ REGISTER_OP("QuickAdvection")
     .Output("testout: int32");
 
 
-void LaunchQuickKernel(const int* testin);
+void LaunchQuickKernel(int* testin);
 
 
-class QuickAdvectionOP : public OpKernel {
-public:
-    explicit PressureSolveOp(OpKernelConstruction* context) : OpKernel(context) {
-        
-    }
+class QuickAdvectionOp : public OpKernel {
+    public:
+        explicit QuickAdvectionOp(OpKernelConstruction* context) : OpKernel(context) {
+            
+        }
 
 
     void Compute(OpKernelContext* context) override {
         // General
-        const Tensor& testin = context->input(0);
+        Tensor testin = context->input(0);
         auto testin_flat = testin.flat<int32>();
-
+	
         context->set_output(0, testin);
 
         LaunchQuickKernel(testin_flat.data());
     }
-}
+};
