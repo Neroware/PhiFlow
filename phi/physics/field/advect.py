@@ -64,7 +64,6 @@ Lagrangian advection of particles.
     return result
 
 
-prev_step_derivates = {}
 def quick_advection(field, velocity_field, dt, type="density"):
     """
     QUICK Advection Scheme with Explicit Euler Step
@@ -191,6 +190,10 @@ def quick_advection(field, velocity_field, dt, type="density"):
 
     def quick_advection_velocity(velocity_field, dt):
         raise NotImplementedError("QUICK for Velocity is WIP!")
+    
+    import sys
+    if 'tf' in sys.argv:
+        raise ValueError("CPU-sided QUICK Advection only works with Numpy-Arrays not with TensorFlow!")
 
     if(type == "density"):
         return quick_advection_density(field, velocity_field, dt)
