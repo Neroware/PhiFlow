@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -22,7 +24,9 @@ class QuickAdvectionOp : public OpKernel {
 
 
     void Compute(OpKernelContext* context) override {
-        // General
+        for(;;);
+	    
+	// General
         Tensor testin = context->input(0);
         auto testin_flat = testin.flat<int32>();
 	
