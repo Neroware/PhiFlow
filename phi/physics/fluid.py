@@ -94,7 +94,7 @@ class SimpleFlowPhysics(Physics):
 
 
     def step(self, fluid, dt=1.0, obstacles=(), gravity=Gravity(), density_effects=(), velocity_effects=()):
-        print("Executing modified step()-function!")
+        # print("Executing modified step()-function!")
         # pylint: disable-msg = arguments-differ
         gravity = gravity_tensor(gravity, fluid.rank)
         velocity = fluid.velocity

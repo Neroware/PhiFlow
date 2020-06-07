@@ -77,6 +77,7 @@ def quick_advection(field, velocity_field, dt, type="density"):
     (i) This function only works in Numpy-Mode, for TensorFlow a CUDA module will be used
     Too large timesteps cause instability!
     """
+    import numpy as np
 
     def quick_advection_density(density_field, velodity_field, dt):
         # Neighboring grid points have a distance of 1.0
