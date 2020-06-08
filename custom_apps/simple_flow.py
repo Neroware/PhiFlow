@@ -1,12 +1,11 @@
-import numpy as np
-
 import sys
 if 'tf' in sys.argv:
-    from phi.tf.flow import *  # Use TensorFlow
-    MODE = 'TensorFlow'
-else:
-    from phi.flow import *  # Use NumPy
-    MODE = 'NumPy'
+    raise RuntimeError("This simulation can only be run in Numpy-Mode!")
+
+import numpy as np
+from phi import *
+from phi.flow import *  # Use NumPy
+MODE = 'NumPy'
 RESOLUTION = [int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
 DESCRIPTION = "Very basic flow test."
 
@@ -36,8 +35,8 @@ class SimpleFlow(App):
         dt = self.timestep
 
         # Advection
-        #self.fluid.density = quick_advection(density, velocity, dt, type="density")
-        #self.fluid.velocity = quick_advection(velocity, velocity, dt, type="velocity")
+        self.fluid.density = advect.quick_advection(density, velocity, dt, type="density")
+        #self.fluid.velocity = advect.quick_advection(velocity, velocity, dt, type="velocity")
 
         world.step(dt=self.timestep)
         

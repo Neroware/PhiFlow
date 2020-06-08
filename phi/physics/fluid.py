@@ -82,7 +82,7 @@ class SimpleFlowPhysics(Physics):
     """
 
     def __init__(self, pressure_solver=None, make_input_divfree=False, make_output_divfree=True, conserve_density=True):
-        print("G'Day! I am Simple Flow Physics!")
+        print("G'Day! I am Simple Flow Physics for Testing!")
         Physics.__init__(self, [StateDependency('obstacles', 'obstacle'),
                                 StateDependency('gravity', 'gravity', single_state=True),
                                 StateDependency('density_effects', 'density_effect', blocking=True),
@@ -94,28 +94,9 @@ class SimpleFlowPhysics(Physics):
 
 
     def step(self, fluid, dt=1.0, obstacles=(), gravity=Gravity(), density_effects=(), velocity_effects=()):
-        # print("Executing modified step()-function!")
-        # pylint: disable-msg = arguments-differ
         gravity = gravity_tensor(gravity, fluid.rank)
         velocity = fluid.velocity
         density = fluid.density
-        #if self.make_input_divfree:
-        #    velocity, fluid.solve_info = divergence_free(velocity, fluid.domain, obstacles, pressure_solver=self.pressure_solver, return_info=True)
-        # --- Advection ---
-        density = advect.quick_advection(density, velocity, dt, type="density")
-        #velocity = advect.quick_advection(velocity, velocity, dt, type="velocity")
-
-        #if self.conserve_density and np.all(Material.solid(fluid.domain.boundaries)):
-        #    density = density.normalized(fluid.density)
-        # --- Effects ---
-        #for effect in density_effects:
-        #    density = effect_applied(effect, density, dt)
-        #for effect in velocity_effects:
-        #    velocity = effect_applied(effect, velocity, dt)
-        #velocity += buoyancy(fluid.density, gravity, fluid.buoyancy_factor) * dt
-        # --- Pressure solve ---
-        #if self.make_output_divfree:
-        #    velocity, fluid.solve_info = divergence_free(velocity, fluid.domain, obstacles, pressure_solver=self.pressure_solver, return_info=True)
         return fluid.copied_with(density=density, velocity=velocity, age=fluid.age + dt)
 ### =========================== END INSERTED =========================== ###
 
