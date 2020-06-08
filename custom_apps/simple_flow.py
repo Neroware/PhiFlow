@@ -102,9 +102,4 @@ class SimpleFlow(App):
         return StaggeredGrid(velocity_grid)
 
 
-print("Testing CUDA")
-from phi.tf.tf_cuda_quick_advection import test_cuda
-test_cuda()
-print("End Test")
-
 show(SimpleFlow(), display=('Velocity', 'Desnity'), framerate=2)

@@ -1,9 +1,4 @@
-#include <cublas_v2.h>
-#include <cuda_runtime.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <numeric>
+#include "cuda_util.h"
 
 
 void LaunchQuickKernel(int* testin) {

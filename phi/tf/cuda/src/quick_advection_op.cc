@@ -23,7 +23,7 @@ void LaunchQuickKernel(int* testin);
 class QuickAdvectionOp : public OpKernel {
 public:
     explicit QuickAdvectionOp(OpKernelConstruction* context) : OpKernel(context) {
-        printf("Hallo Welt!\n");
+        printf("QUICK Debug Message: I'm alive!\n");
     }
 
 
