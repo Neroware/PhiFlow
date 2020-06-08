@@ -7,10 +7,10 @@ from . import tf
 from phi import math
 
 
-# --- Check if TF enabled ---
-import sys
-if not 'tf' in sys.argv:
-   raise RuntimeError("QUICK Advection: This module can only be run in TF mode!")
+# --- Check if TF enabled (remove later!)  ---
+#import sys
+#if not 'tf' in sys.argv:
+#   raise RuntimeError("QUICK Advection: This module can only be run in TF mode!")
 
 # --- Load Custom Ops ---
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -20,13 +20,18 @@ if not os.path.isfile(kernel_path):
 quick_op = tf.load_op_library(kernel_path)
 
 
-def quick_advection(field
+def quick_advection(field, velocity_field, dt, field_type="density", step_type="explicit_euler"):
+    """
+    Advects the field using the QUICK scheme
+    """
+    dimensions = field.shape
+    print("Aloha! ", dimensions) 
 
 
-#def test_cuda():
-#    print("Sarting CUDA TF test...")
-#    with tf.Session(""):
-#        quick_op.quick_advection([[1, 2], [3, 4]]).eval()
-#
-#    #o = quick_op.quick_advection(24)
-#    print("RESULT OF CUDA TEST")
+def test_cuda():
+    print("Sarting CUDA TF test...")
+    with tf.Session(""):
+        quick_op.quick_advection([[1, 2], [3, 4]]).eval()
+    #o = quick_op.quick_advection(24)
+    print("RESULT OF CUDA TEST")
+
