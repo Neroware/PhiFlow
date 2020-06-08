@@ -194,7 +194,7 @@ def quick_advection(field, velocity_field, dt, type="density"):
     
     import sys
     if 'tf' in sys.argv:
-        raise ValueError("CPU-sided QUICK Advection only works with Numpy-Arrays not with TensorFlow!")
+        raise ValueError("This version of QUICK Advection only works with Numpy arrays. Please use the TensorFlow version!")
 
     if(type == "density"):
         return quick_advection_density(field, velocity_field, dt)
