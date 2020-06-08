@@ -98,6 +98,35 @@ class SimpleFlowPhysics(Physics):
         velocity = fluid.velocity
         density = fluid.density
         return fluid.copied_with(density=density, velocity=velocity, age=fluid.age + dt)
+
+
+class CUDAFlowPhysics(Physics):
+    """
+    Physics modelling the incompressible Navier-Stokes equations.
+    Supports buoyancy proportional to the marker density.
+    Supports obstacles, density effects, velocity effects, global gravity.
+    """
+
+    def __init__(self, pressure_solver=None, make_input_divfree=False, make_output_divfree=True, conserve_density=True):
+        print("G'Day! I am CUDA Flow Physics for Testing!")
+        Physics.__init__(self, [StateDependency('obstacles', 'obstacle'),
+                                StateDependency('gravity', 'gravity', single_state=True),
+                                StateDependency('density_effects', 'density_effect', blocking=True),
+                                StateDependency('velocity_effects', 'velocity_effect', blocking=True)])
+        self.pressure_solver = pressure_solver
+        self.make_input_divfree = make_input_divfree
+        self.make_output_divfree = make_output_divfree
+        self.conserve_density = conserve_density
+
+
+    def step(self, fluid, dt=1.0, obstacles=(), gravity=Gravity(), density_effects=(), velocity_effects=()):
+        gravity = gravity_tensor(gravity, fluid.rank)
+        velocity = fluid.velocity
+        density = fluid.density
+
+        density = tf_cuda_quick_advection(density, velocity, dt)
+
+        return fluid.copied_with(density=density, velocity=velocity, age=fluid.age + dt)
 ### =========================== END INSERTED =========================== ###
 
 

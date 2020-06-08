@@ -20,7 +20,7 @@ if not os.path.isfile(kernel_path):
 quick_op = tf.load_op_library(kernel_path)
 
 
-def quick_advection(field, velocity_field, dt, field_type="density", step_type="explicit_euler"):
+def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", step_type="explicit_euler"):
     """
     Advects the field using the QUICK scheme
     """
