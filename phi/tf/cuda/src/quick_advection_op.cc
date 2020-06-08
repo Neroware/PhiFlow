@@ -9,8 +9,12 @@ using namespace tensorflow;
 
 
 REGISTER_OP("QuickAdvection")
-    .Input("testin: int32")
-    .Output("testout: int32")
+    //.Input("dimensions: int32")
+    .Input("field: float32")
+    .Input("velocity_field: float32")
+    //.Attr("field_type: string")
+    //.Attr("step_type: string")
+    .Output("advected_field: float32")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
         c->set_output(0, c->input(0));
 	    return Status::OK();
@@ -29,7 +33,8 @@ public:
 
     void Compute(OpKernelContext* context) override {
 	// Grab Input Tensor
-        const Tensor& input_tensor = context->input(0);
+        printf("I'm ... working on that!\n");
+        /*const Tensor& input_tensor = context->input(0);
 	auto input = input_tensor.flat<int32>();
 	    
 	// Create Output Tensor
@@ -45,7 +50,7 @@ public:
 	}
 	
 	// Preserve the first input value if possible.
-	if (N > 0) output_flat(0) = input(0);
+	if (N > 0) output_flat(0) = input(0);*/
     }
 };
 

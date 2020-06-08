@@ -23,9 +23,22 @@ quick_op = tf.load_op_library(kernel_path)
 def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", step_type="explicit_euler"):
     """
     Advects the field using the QUICK scheme
+    :param field: The field to advect
+    :param velocity_field: Velocity field for advection, equals to 'field' when velocity is advected
+    :field_type: density, velocity
+    :step_type: explicit_euler, adam_bashford
+    :return: Advected field
     """
-    dimensions = field.shape
-    print("Aloha! ", dimensions) 
+
+    if(field_type == "density"):
+        dimensions = field.data.shape[1]
+        density_tensor = field.data
+        velocity_tensor = velocity_field.data
+
+        with tf.Session(""):
+            print(">>>>>>>>>>>>>>>> ", type(density_tensor))
+            quick_op.quick_advection(density_tensor, velocity_tensor).eval()
+        
 
 
 def test_cuda():

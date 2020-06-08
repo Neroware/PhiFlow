@@ -91,6 +91,4 @@ class CUDAFlow(App):
         return StaggeredGrid(velocity_grid)
 
 
-show(SimpleFlow(), display=('Velocity', 'Desnity'), framerate=2)
-
-print("CUDA TF QUICK Advection")
+show(CUDAFlow(), display=('Velocity', 'Desnity'), framerate=2)

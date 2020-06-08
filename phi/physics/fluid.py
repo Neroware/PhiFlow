@@ -123,8 +123,10 @@ class CUDAFlowPhysics(Physics):
         gravity = gravity_tensor(gravity, fluid.rank)
         velocity = fluid.velocity
         density = fluid.density
-
-        density = tf_cuda_quick_advection(density, velocity, dt)
+	
+        #import phi.tf as tf
+        from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
+        density_new = tf_cuda_quick_advection(density, velocity, dt)
 
         return fluid.copied_with(density=density, velocity=velocity, age=fluid.age + dt)
 ### =========================== END INSERTED =========================== ###
