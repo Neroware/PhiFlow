@@ -6,12 +6,15 @@ MODE = 'TensorFlow'
 RESOLUTION = [int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
 DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
+from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
+
+
 
 class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
 
-        self.physics = CUDAFlowPhysics()
+        self.physics = SimpleFlowPhysics()
         self.timestep = 0.1
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
@@ -28,6 +31,9 @@ class CUDAFlow(App):
         velocity = self.fluid.velocity
         density = self.fluid.density
         dt = self.timestep
+
+        self.fluid.density = tf_cuda_quick_advection(density, velocity, dt)
+
         world.step(dt=self.timestep)
         
 
@@ -54,7 +60,7 @@ class CUDAFlow(App):
                     next.append([0.5])
             data.append(next)
 
-        density_array = np.array([data])
+        density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
 
 
@@ -72,7 +78,7 @@ class CUDAFlow(App):
                     next.append([0.0])
             data.append(next)
 
-        density_array = np.array([data])
+        density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
 
 
@@ -87,7 +93,7 @@ class CUDAFlow(App):
                 next.append([0.0, 1.0])
             data.append(next)
 
-        velocity_grid = np.array([data])
+        velocity_grid = np.array([data], dtype="float32")
         return StaggeredGrid(velocity_grid)
 
 

@@ -31,13 +31,30 @@ def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", ste
     """
 
     if(field_type == "density"):
+        density_tensor = tf.constant(field.data)
+        velocity_v_field, velocity_u_field = velocity_field.data
+        velocity_v_tensor = tf.constant(velocity_v_field.data)
+        velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = field.data.shape[1]
-        density_tensor = field.data
-        velocity_tensor = velocity_field.data
-
         with tf.Session(""):
-            print(">>>>>>>>>>>>>>>> ", type(density_tensor))
-            quick_op.quick_advection(density_tensor, velocity_tensor).eval()
+            result = quick_op.quick_advection(density_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, field_type, step_type).eval()
+            print("======> ", result)
+            return result
+        
+
+            #quick_op.quick_advection(density_data).eval()
+    #if(field_type == "density"):
+    #    dimensions = field.data.shape[1]
+    #    density_data = field.points.data
+    #    velocity_v_field, velocity_u_field = velocity_field.unstack()
+    #    velocity_v_data = velocity_v_field.points.data
+    #    velocity_u_data = velocity_u_field.points.data
+    #
+    #    with tf.Session(""):
+    #        density_tensor = tf.constant(density_data)
+    #        print(">>>>> ", velocity_v_data)
+    #
+    #        quick_op.quick_advection(density_tensor).eval()
         
 
 
