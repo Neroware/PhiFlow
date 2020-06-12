@@ -32,17 +32,11 @@ def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", ste
     """
 
     if(field_type == "density"):
-        import tensorflow
-        print("Num GPUs Available: ", len(tensorflow.config.experimental.list_physical_devices('GPU')))
-
         density_tensor = tf.constant(field.data)
         velocity_v_field, velocity_u_field = velocity_field.data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = field.data.shape[1]
         with tf.Session(""):
-            #with tf.device("/gpu:0"):
-            print("Running Custom Op!")
             result = quick_op.quick_advection(density_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 0, 0).eval()
-            print("======> ", result)
             return result
