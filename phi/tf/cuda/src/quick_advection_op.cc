@@ -1,5 +1,3 @@
-//#include <stdio.h>
-
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -36,7 +34,6 @@ private:
 
 public:
     explicit QuickAdvectionOp(OpKernelConstruction* context) : OpKernel(context) {
-        //printf("QUICK Debug Message: I'm alive!\n");
         context->GetAttr("dimensions", &dimensions);
         context->GetAttr("timestep", &timestep);
         context->GetAttr("field_type", &field_type);
@@ -45,8 +42,6 @@ public:
 
 
     void Compute(OpKernelContext* context) override{
-        //printf("QUICK: Launching Kernel...\n");
-
         const Tensor& input_field = context->input(0);
         const Tensor& input_vel_u = context->input(1);
         const Tensor& input_vel_v = context->input(2);
@@ -60,7 +55,6 @@ public:
         auto v = input_vel_v.flat<float>();
 
         if(field_type == 0){
-            //printf("Field set to 'density'\n");
             LaunchQuickDensityKernel(output_flat.data(), dimensions, timestep, field.data(), u.data(), v.data());
         }
 
@@ -68,5 +62,5 @@ public:
 };
 
 
-REGISTER_KERNEL_BUILDER(Name("QuickAdvection").Device(DEVICE_CPU), QuickAdvectionOp);
+REGISTER_KERNEL_BUILDER(Name("QuickAdvection").Device(DEVICE_GPU), QuickAdvectionOp);
 

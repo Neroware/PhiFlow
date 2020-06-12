@@ -13,7 +13,7 @@ from phi import math
 #   raise RuntimeError("QUICK Advection: This module can only be run in TF mode!")
 
 # --- Load Custom Ops ---
-os.environ["CUDA_VISIBLE_DEVICES"]='1'
+os.environ["CUDA_VISIBLE_DEVICES"]='0'
 current_dir = os.path.dirname(os.path.realpath(__file__))
 kernel_path = os.path.join(current_dir, 'cuda/build/quick_advection_op.so')
 if not os.path.isfile(kernel_path):
@@ -32,12 +32,17 @@ def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", ste
     """
 
     if(field_type == "density"):
+        import tensorflow
+        print("Num GPUs Available: ", len(tensorflow.config.experimental.list_physical_devices('GPU')))
+
         density_tensor = tf.constant(field.data)
         velocity_v_field, velocity_u_field = velocity_field.data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = field.data.shape[1]
         with tf.Session(""):
+            #with tf.device("/gpu:0"):
+            print("Running Custom Op!")
             result = quick_op.quick_advection(density_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 0, 0).eval()
             print("======> ", result)
             return result
