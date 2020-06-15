@@ -72,7 +72,7 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0]):
             next = []
             for x in range(0, RESOLUTION[0]):
-                if(x == 50):
+                if(y == 50):
                     next.append([1.0])
                 else:
                     next.append([0.0])
@@ -90,7 +90,7 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                next.append([0.0, 1.0])
+                next.append([1.0, 0.0])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")

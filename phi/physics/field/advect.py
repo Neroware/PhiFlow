@@ -155,7 +155,8 @@ def quick_advection(field, velocity_field, dt, type="density"):
                     row.append(0.0)
             staggered_density_y.append(row)
 
-
+        print("Staggered density X:", staggered_density_x)
+        print("Staggered density Y:", staggered_density_y)
         # Calculate partial derviates dup/dx, dvp/dy and finally dp/dt with velocity (u, v) and density p
         derivates_grid = np.zeros((dim_y, dim_x))
         density_data_step = density_data.copy()
