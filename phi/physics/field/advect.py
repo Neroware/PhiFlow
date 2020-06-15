@@ -166,13 +166,9 @@ def quick_advection(field, velocity_field, dt, type="density"):
                 # Discretize partial derivates
                 rho_x1 = staggered_density_x[j][i]
                 rho_x2 = staggered_density_x[j][i + 1]
-                #if(i == 0 and j == 1):
-                #    print("Density at (0.5, 1) and (1.5, 1): ", rho_x1, ", ", rho_x2)
                 u1 = vel_u_data[j][i][0]
                 u2 = vel_u_data[j][i + 1][0]
                 dupdx = (u2 * rho_x2 - u1 * rho_x1) / delta_x
-                #if(i == 0 and j == 1):
-                #    print("Density partial derivate at (1, 1): ", dupdx)
 
                 rho_y1 = staggered_density_y[j][i]
                 rho_y2 = staggered_density_y[j + 1][i]

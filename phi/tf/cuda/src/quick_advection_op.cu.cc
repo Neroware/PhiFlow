@@ -167,45 +167,4 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const f
     cudaFree(d_staggered_density_x);
     cudaFree(d_staggered_density_y);
     cudaFree(d_out);
-
-    // Debug Output for Staggered Density X
-    /*float* staggered_density_x = (float*) malloc((DIM + 1) * DIM * sizeof(float));
-    cudaMemcpy(staggered_density_x, d_staggered_density_x, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
-    printf("Debug Output for Staggered Density X:\n");
-    printf("\n===========================================\n");
-    for(int j = 0; j < DIM; j++){
-        for(int i = 0; i < DIM + 1; i++){
-            float val = staggered_density_x[IDX(j, i, DIM + 1)];
-            printf("%f,", val);
-        }
-        printf("\n");
-    } 
-    printf("\n===========================================\n");
-
-    // Debug Output for Staggered Density Y
-    float* staggered_density_y = (float*) malloc(DIM * (DIM + 1) * sizeof(float));
-    cudaMemcpy(staggered_density_y, d_staggered_density_y, DIM * (DIM + 1) * sizeof(float), cudaMemcpyDeviceToHost);
-    printf("Debug Output for Staggered Density Y:\n");
-    printf("\n===========================================\n");
-    for(int j = 0; j < DIM + 1; j++){
-        for(int i = 0; i < DIM; i++){
-            float val = staggered_density_y[IDX(j, i, DIM)];
-            printf("%f,", val);
-        }
-        printf("\n");
-    }
-    printf("\n===========================================\n");*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

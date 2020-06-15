@@ -72,7 +72,7 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0]):
             next = []
             for x in range(0, RESOLUTION[0]):
-                if(y == 50):
+                if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
                     next.append([1.0])
                 else:
                     next.append([0.0])
@@ -90,11 +90,11 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                next.append([1.0, 0.0])
+                next.append([0.25, 0.5])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")
         return StaggeredGrid(velocity_grid)
 
 
-show(CUDAFlow(), display=('Velocity', 'Desnity'), framerate=2)
+show(CUDAFlow(), display=('Velocity', 'Density'), framerate=2)
