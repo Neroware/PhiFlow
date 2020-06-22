@@ -32,7 +32,8 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
 
-        self.fluid.density = tf_cuda_quick_advection(density, velocity, dt)
+        self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density)
+        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
         world.step(dt=self.timestep)
         
@@ -84,13 +85,13 @@ class CUDAFlow(App):
 
     def _get_velocity_grid(self):
         """
-        Generiert a StaggeredGrid, with constant velocity u = (0, 1)
+        Generates a StaggeredGrid, with constant velocity u = (0, 1)
         """
         data = []
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                next.append([0.25, 0.5])
+                next.append([0.0, 1.0])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")

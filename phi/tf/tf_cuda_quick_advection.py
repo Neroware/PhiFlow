@@ -21,12 +21,12 @@ if not os.path.isfile(kernel_path):
 quick_op = tf.load_op_library(kernel_path)
 
 
-def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", step_type="explicit_euler"):
+def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density", step_type="explicit_euler"):
     """
     Advects the field using the QUICK scheme
     :param field: The field to advect
     :param velocity_field: Velocity field for advection, equals to 'field' when velocity is advected
-    :field_type: density, velocity
+    :field_type: density, velovity
     :step_type: explicit_euler, adam_bashford
     :return: Advected field
     """
@@ -40,3 +40,16 @@ def tf_cuda_quick_advection(field, velocity_field, dt, field_type="density", ste
         with tf.Session(""):
             result = quick_op.quick_advection(density_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 0, 0).eval()
             return result
+
+    elif(field_type == "velocity"):
+        velocity_v_field, velocity_u_field = velocity_field.data
+        velocity_v_tensor = tf.constant(velocity_v_field.data)
+        velocity_u_tensor = tf.constant(velocity_u_field.data)
+        dimensions = velocity_v_field.data.shape[1] - 1;
+        #with tf.Session(""):
+        #    result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 1, 0).eval()
+        #    result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 2, 0).eval()
+        return velocity_field
+
+    print("QUICK Advection: Field type invalid!")
+    return []

@@ -7,7 +7,7 @@
 #define CUDA_THREAD_COL blockIdx.x * blockDim.x + threadIdx.x
 #define CUDA_THREAD_ID blockIdx.x * blockDim.x + threadIdx.x
 #define CUDA_TIME clock()
-#define IDX(i, j, dim) (i) * (dim) + (j) // <--- This macro is super evil and caused me so much pain!
+#define IDX(i, j, dim) (i) * (dim) + (j)
 
 #include <cublas_v2.h>
 #include <stdio.h>
@@ -168,3 +168,28 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const f
     cudaFree(d_staggered_density_y);
     cudaFree(d_out);
 }
+
+
+void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const float timestep, const float* u, const float* v){
+    const int DIM = dimensions;
+    const int BLOCK_DIM = 16;
+    const int BLOCK_ROW_COUNT = ((DIM + 1) / BLOCK_DIM) + 1;
+    const dim3 BLOCK(BLOCK_DIM, BLOCK_DIM, 1);
+    const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
+
+    for(int j = 0; j < DIM; j++){
+        for(int i = 0; i < DIM + 1; i++){
+            output_field[IDX(j, i, DIM + 1)] = 42.0f;
+        }
+    }
+}
+
+
+void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const float timestep, const float* u, const float* v){
+    //TODO
+}
+
+
+
+
+
