@@ -5,12 +5,8 @@ from numbers import Number
 
 from . import tf
 from phi import math
+from phi.tf.flow import *
 
-
-# --- Check if TF enabled (remove later!)  ---
-#import sys
-#if not 'tf' in sys.argv:
-#   raise RuntimeError("QUICK Advection: This module can only be run in TF mode!")
 
 # --- Load Custom Ops ---
 os.environ["CUDA_VISIBLE_DEVICES"]='0'
@@ -19,6 +15,26 @@ kernel_path = os.path.join(current_dir, 'cuda/build/quick_advection_op.so')
 if not os.path.isfile(kernel_path):
         raise ImportError('CUDA binaries not found at %s. Run "python setup.py tf_cuda" to compile them' % kernel_path)
 quick_op = tf.load_op_library(kernel_path)
+
+
+def to_staggered_grid(data_x, data_y, dim):
+    result_data = []
+    for j in range(0, dim + 1):
+        next = []
+        for i in range(0, dim + 1):
+            next.append([None, None])
+        result_data.append(next)
+
+    # X-Components (i+0.5,j)
+    for j in range(0, dim):
+        for i in range(0, dim + 1):
+            result_data[j][i][1] = data_x[j][i]
+    # Y-Components (i,j+0.5)
+    for j in range(0, dim + 1):
+        for i in range(0, dim):
+            result_data[j][i][0] = data_y[j][i]
+
+    return StaggeredGrid(np.array([result_data], dtype="float32"))    
 
 
 def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density", step_type="explicit_euler"):
@@ -46,10 +62,10 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = velocity_v_field.data.shape[1] - 1;
-        #with tf.Session(""):
-        #    result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 1, 0).eval()
-        #    result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 2, 0).eval()
-        return velocity_field
+        with tf.Session(""):
+            result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 1, 0).eval()
+            #result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 2, 0).eval()
+            return to_staggered_grid(result_vel_u[0], velocity_v_field.data[0], dimensions)
 
     print("QUICK Advection: Field type invalid!")
     return []

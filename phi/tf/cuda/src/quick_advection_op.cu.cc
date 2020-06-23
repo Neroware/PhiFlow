@@ -177,11 +177,21 @@ void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const
     const dim3 BLOCK(BLOCK_DIM, BLOCK_DIM, 1);
     const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
 
+    /*printf("Starting test...\n");
+    float* t_data = (float*) malloc(DIM * (DIM + 1) * sizeof(float));
     for(int j = 0; j < DIM; j++){
         for(int i = 0; i < DIM + 1; i++){
-            output_field[IDX(j, i, DIM + 1)] = 42.0f;
+            t_data[IDX(j, i, DIM + 1)] = 42.0f;
         }
     }
+    printf("Writing data...\n");
+    float *d_out;
+    cudaMalloc(&d_out, DIM * (DIM + 1) * sizeof(float));
+    printf("!\n");
+    cudaMemcpy(d_out, t_data, DIM * (DIM + 1) * sizeof(float), cudaMemcpyHostToDevice);
+    printf("!!\n");
+    cudaMemcpy(output_field, d_out, DIM * (DIM + 1) * sizeof(float), cudaMemcpyDeviceToHost);
+    printf("Done!\n");*/
 }
 
 
