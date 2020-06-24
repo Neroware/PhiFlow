@@ -171,19 +171,15 @@ __global__ void upwindVelocityQuickY(float* output_field, float* u, float* v, in
     if (vel_u > 0.0f) {
         float v_L, v_C, v_R;
         v_L = v_C = v_R = 0.0f;
-        if(i == 0){
-            v_L = v_C = v_R = v[IDX(j, i, dim)];
-        }
-        else if(i == 1){
-            v_L = v_C = v[IDX(j, 0, dim)];
-            v_R = v[IDX(j, 1, dim)];
-        }
-        else{
-            v_L = v[IDX(j, i - 2, dim)];
+        if(i > 0){
             v_C = v[IDX(j, i - 1, dim)];
-            v_R = v[IDX(j, i, dim)];
         }
-        output_field[IDX(j, i, dim + 1)] = 0.125f * v_L + 0.25f * v_C + 0.625f * v_R;
+        if(i > 1){
+            v_L = v[IDX(j, i - 2, dim)];
+        }
+        v_R = v[IDX(j, i, dim)];
+        output_field[IDX(j, i, dim + 1)] = 0.5f * (v_C + v_R) - 0.125f * (v_L + v_R - 2.0f * v_C);
+        //output_field[IDX(j, i, dim + 1)] = 0.125f * v_L + 0.25f * v_C + 0.625f * v_R;
     }
     /*else {
         float v_C, v_R, v_FR;
@@ -203,7 +199,7 @@ __global__ void advectVelocityYExplicitEuler(float* output_field, float* u, floa
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
-    if(i >= dim + 1 || j >= dim){
+    if(i >= dim || j >= dim + 1){
         return;
     }
 
@@ -307,6 +303,7 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     float *d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
     advectVelocityYExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_staggered_velocity_x, d_staggered_velocity_y, d_v, DIM, timestep);
+    dumpArray(d_out, DIM, DIM + 1);
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);    
 
     // Cleanup
