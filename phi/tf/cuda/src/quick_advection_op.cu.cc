@@ -159,6 +159,30 @@ __global__ void interpolateVelocityX(float* output_field, float* u, int dim){
 }
 
 
+__global__ void interpolateVelocityY(float* output_field, float* v, int dim){
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if(i >= dim + 1 || j >= dim + 1){
+        return;
+    }
+
+    float vel_v_1, vel_v_2;
+    vel_v_1 = vel_v_2 = 0.0f;
+    if(i == 0){
+        vel_v_1 = vel_v_2 = v[IDX(j, i, dim)];
+    }
+    else if(i == dim){
+        vel_v_1 = vel_v_2 = v[IDX(j, i - 1, dim)];
+    }
+    else{
+        vel_v_1 = v[IDX(j, i, dim)];
+        vel_v_2 = v[IDX(j, i - 1, dim)];
+    }
+    output_field[IDX(j, i, dim + 1)] = 0.5f * (vel_v_1 + vel_v_2);
+}
+
+
 __global__ void upwindVelocityQuickY(float* output_field, float* u, float* v, int dim){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
@@ -197,6 +221,46 @@ __global__ void upwindVelocityQuickY(float* output_field, float* u, float* v, in
         }
         output_field[IDX(j, i, dim + 1)] = 0.5f * (v_C + v_R) - 0.125f * (v_FR + v_C - 2.0f * v_R);
         //output_field[IDX(j, i, dim + 1)] = 0.625f * v_C + 0.25f * v_R + 0.125f * v_FR;
+    }
+}
+
+
+__global__ void upwindVelocityQuickX(float* output_field, float* u, float* v, int dim){
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if(i >= dim + 1 || j >= dim + 1){
+        return;
+    }
+
+    float vel_v = v[IDX(j, i, dim + 1)];
+    if (vel_v > 0.0f) {
+        float u_L, u_C, u_R;
+        u_L = u_C = u_R = 0.0f;
+        if(j > 0){
+            u_C = u[IDX(j - 1, i, dim + 1)];
+        }
+        if(j > 1){
+            u_L = u[IDX(j - 2, i, dim + 1)];
+        }
+        if(j < dim){
+            u_R = u[IDX(j, i, dim + 1)];
+        }
+        output_field[IDX(j, i, dim + 1)] = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_C = u_R = u_FR = 0.0f;
+        if (j < dim) {
+            u_R = u[IDX(j, i, dim + 1)];
+        }
+        if (j < dim - 1) {
+            u_FR = u[IDX(j + 1, i, dim + 1)];
+        }
+        if(i > 0){
+            u_C = u[IDX(j - 1, i, dim + 1)];
+        }
+        output_field[IDX(j, i, dim + 1)] = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
     }
 }
 
