@@ -135,7 +135,7 @@ __global__ void advectDensityExplicitEuler(float* field, float* rho, float* rho_
 
 /* ============================================ Velocity Advection =============================================*/
 
-__global__ void interpolateToStaggeredVelocityX(float* output_field, float* u, int dim){
+__global__ void interpolateStaggeredVelocityX(float* output_field, float* u, int dim){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
     
@@ -159,7 +159,7 @@ __global__ void interpolateToStaggeredVelocityX(float* output_field, float* u, i
 }
 
 
-__global__ void upwindToStaggeredVelocityQuickY(float* output_field, float* u, float* v, int dim){
+__global__ void upwindStaggeredVelocityQuickY(float* output_field, float* u, float* v, int dim){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -201,7 +201,7 @@ __global__ void upwindToStaggeredVelocityQuickY(float* output_field, float* u, f
 }
 
 
-__global__ void upwindToCenteredVelocityQuickY(float* output_field, float* v, int dim) {
+__global__ void upwindCenteredVelocityQuickY(float* output_field, float* v, int dim) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -247,11 +247,15 @@ __global__ void advectVelocityYExplicitEuler(float* output_field, float* u_stagg
     float v_2 = v_staggered[IDX(j, i, dim + 1)];
     float delta_u_v_delta_x = u_1 * v_1 - u_2 * v_2;
 
-    float v_3 = v_centered[IDX(j, i, dim)];
-    float v_4 = v_centered[IDX(j + 1, i, dim)];
+    float v_3, v_4;
+    v_3 = v_4 = 0.0f;
+    if(j > 0){
+        v_3 = v_centered[IDX(j - 1, i, dim)];
+    }
+    v_4 = v_centered[IDX(j, i, dim)];
     float delta_v_v_delta_y = v_4 * v_4 - v_3 * v_3;
 
-    float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
+    float delta_v_delta_t = /*-delta_u_v_delta_x*/ - delta_v_v_delta_y;
     output_field[IDX(j, i, dim)] = v_field[IDX(j, i, dim)] + delta_v_delta_t * dt;
 }
 
@@ -327,22 +331,34 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     cudaMemcpy(d_u, u, (DIM + 1) * DIM * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, DIM * (DIM + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
+    //printf("Initial Velocity Fields:\n");
+    //dumpArray(d_u, DIM + 1, DIM);
+    //dumpArray(d_v, DIM, DIM + 1);
+
     float* d_staggered_u;
     cudaMalloc(&d_staggered_u, (DIM + 1) * (DIM + 1) * sizeof(float));
-    interpolateToStaggeredVelocityX CUDA_CALL(GRID, BLOCK) (d_staggered_u, d_u, DIM);
+    interpolateStaggeredVelocityX CUDA_CALL(GRID, BLOCK) (d_staggered_u, d_u, DIM);
+    //printf("\nInterpolated Staggered u:\n");
+    //dumpArray(d_staggered_u, DIM + 1, DIM + 1);
 
     float* d_staggered_v;
     cudaMalloc(&d_staggered_v, (DIM + 1) * (DIM + 1) * sizeof(float));
-    upwindToStaggeredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_staggered_v, d_staggered_u, d_v, DIM);
+    upwindStaggeredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_staggered_v, d_staggered_u, d_v, DIM);
+    //printf("\nUpwind Staggered v:\n");
+    //dumpArray(d_staggered_v, DIM + 1, DIM + 1);
 
     float* d_centered_v;
     cudaMalloc(&d_centered_v, DIM * DIM * sizeof(float));
-    upwindToCenteredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_centered_v, d_v, DIM);
+    upwindCenteredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_centered_v, d_v, DIM);
+    //printf("\nUpwind Centered v:\n");
+    //dumpArray(d_centered_v, DIM, DIM);
 
     float* d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
-    advectVelocityYExplicitEuler(d_out, d_staggred_u, d_staggered_v, d_centered_v, d_v, DIM, timestep);
+    advectVelocityYExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_staggered_u, d_staggered_v, d_centered_v, d_v, DIM, timestep);
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
+    //printf("\nResult:\n");
+    //dumpArray(d_out, DIM, DIM + 1);
 
     // Cleanup
     cudaFree(d_u);
