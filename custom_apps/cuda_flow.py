@@ -101,7 +101,7 @@ class CUDAFlow(App):
             for x in range(0, RESOLUTION[0] + 1):
                 #next.append([0.0, 1.0])
                 if(y == 25):
-                    next.append([2.0, 0.0])
+                    next.append([1.1, 0.0])
                 else:
                     next.append([1.0, 0.0])
             data.append(next)

@@ -212,7 +212,7 @@ __global__ void upwindCenteredVelocityQuickY(float* output_field, float* v, int 
     float lerped_v = 0.5f * (v[IDX(j, i, dim)] + v[IDX(j + 1, i, dim)]);
     if (lerped_v > 0.0f) {
         float v_L, v_C, v_R;
-        v_L = v_C = v_R = 0.0f;
+        v_L = v_C = v_R = v[IDX(j, i, dim)];
         v_C = v[IDX(j, i, dim)];
         v_R = v[IDX(j + 1, i, dim)];
         if (j > 0) {
@@ -222,7 +222,7 @@ __global__ void upwindCenteredVelocityQuickY(float* output_field, float* v, int 
     }
     else {
         float v_C, v_R, v_FR;
-        v_C = v_R = v_FR = 0.0f;
+        v_C = v_R = v_FR = v[IDX(j, i, dim)];
         v_C = v[IDX(j, i, dim)];
         v_R = v[IDX(j + 1, i, dim)];
         if (j < dim) {
@@ -248,14 +248,19 @@ __global__ void advectVelocityYExplicitEuler(float* output_field, float* u_stagg
     float delta_u_v_delta_x = u_1 * v_1 - u_2 * v_2;
 
     float v_3, v_4;
-    v_3 = v_4 = 0.0f;
-    if(j > 0){
-        v_3 = v_centered[IDX(j - 1, i, dim)];
+    if(j == 0){
+        v_4 = v_3 = v_centered[IDX(j, i, dim)];
     }
-    v_4 = v_centered[IDX(j, i, dim)];
+    else if(j == dim){
+        v_4 = v_3 = v_centered[IDX(j - 1, i, dim)];
+    }
+    else{
+        v_3 = v_centered[IDX(j - 1, i, dim)];
+        v_4 = v_centered[IDX(j, i, dim)];
+    }
     float delta_v_v_delta_y = v_4 * v_4 - v_3 * v_3;
 
-    float delta_v_delta_t = /*-delta_u_v_delta_x*/ - delta_v_v_delta_y;
+    float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
     output_field[IDX(j, i, dim)] = v_field[IDX(j, i, dim)] + delta_v_delta_t * dt;
 }
 
