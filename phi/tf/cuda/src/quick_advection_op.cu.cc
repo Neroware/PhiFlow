@@ -159,6 +159,70 @@ __global__ void interpolateStaggeredVelocityX(float* output_field, float* u, int
 }
 
 
+__global__ void interpolateStaggeredVelocityY(float* output_field, float* v, int dim) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim + 1 || j >= dim + 1) {
+        return;
+    }
+
+    float vel_v_1, vel_v_2;
+    vel_v_1 = vel_v_2 = 0.0f;
+    if (i == 0) {
+        vel_v_1 = vel_v_2 = v[IDX(j, i, dim)];
+    }
+    else if (i == dim) {
+        vel_v_1 = vel_v_2 = v[IDX(j, i - 1, dim)];
+    }
+    else {
+        vel_v_1 = v[IDX(j, i, dim)];
+        vel_v_2 = v[IDX(j, i - 1, dim)];
+    }
+    output_field[IDX(j, i, dim + 1)] = 0.5f * (vel_v_1 + vel_v_2);
+}
+
+
+__global__ void upwindStaggeredVelocityQuickX(float* output_field, float* u, float* v, int dim) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim + 1 || j >= dim + 1) {
+        return;
+    }
+
+    float vel_v = v[IDX(j, i, dim + 1)];
+    if (vel_v > 0.0f) {
+        float u_L, u_C, u_R;
+        u_L = u_C = u_R = 0.0f;
+        if (j > 0) {
+            u_C = u[IDX(j - 1, i, dim + 1)];
+        }
+        if (j > 1) {
+            u_L = u[IDX(j - 2, i, dim + 1)];
+        }
+        if (j < dim) {
+            u_R = u[IDX(j, i, dim + 1)];
+        }
+        output_field[IDX(j, i, dim + 1)] = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_C = u_R = u_FR = 0.0f;
+        if (j < dim) {
+            u_R = u[IDX(j, i, dim + 1)];
+        }
+        if (j < dim - 1) {
+            u_FR = u[IDX(j + 1, i, dim + 1)];
+        }
+        if (j > 0) {
+            u_C = u[IDX(j - 1, i, dim + 1)];
+        }
+        output_field[IDX(j, i, dim + 1)] = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+}
+
+
 __global__ void upwindStaggeredVelocityQuickY(float* output_field, float* u, float* v, int dim){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
@@ -201,6 +265,38 @@ __global__ void upwindStaggeredVelocityQuickY(float* output_field, float* u, flo
 }
 
 
+__global__ void upwindCenteredVelocityQuickX(float* output_field, float* u, int dim) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim || j >= dim) {
+        return;
+    }
+
+    float lerped_u = 0.5f * (u[IDX(j, i, dim + 1)] + u[IDX(j, i + 1, dim)]);
+    if (lerped_u > 0.0f) {
+        float u_L, u_C, u_R;
+        u_L = u_C = u_R = u[IDX(j, i, dim + 1)];
+        u_C = u[IDX(j, i, dim + 1)];
+        u_R = u[IDX(j, i + 1, dim + 1)];
+        if (i > 0) {
+            u_L = u[IDX(j, i - 1, dim + 1)];
+        }
+        output_field[IDX(j, i, dim)] = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_C = u_R = u_FR = u[IDX(j, i, dim + 1)];
+        u_C = u[IDX(j, i, dim + 1)];
+        u_R = u[IDX(j, i + 1, dim + 1)];
+        if (i < dim) {
+            v_FR = u[IDX(j, i + 2, dim + 1)];
+        }
+        output_field[IDX(j, i, dim)] = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+}
+
+
 __global__ void upwindCenteredVelocityQuickY(float* output_field, float* v, int dim) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
@@ -230,6 +326,38 @@ __global__ void upwindCenteredVelocityQuickY(float* output_field, float* v, int 
         }
         output_field[IDX(j, i, dim)] = 0.5f * (v_C + v_R) - 0.125f * (v_FR + v_C - 2.0f * v_R);
     }
+}
+
+
+__global__ void advectVelocityXExplicitEuler(float* output_field, float* u_staggered, float* v_staggered, float* u_centered, float* u_field, int dim, float dt) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim || j >= dim + 1) {
+        return;
+    }
+
+    float u_1 = u_staggered[IDX(j + 1, i, dim + 1)];
+    float u_2 = u_staggered[IDX(j, i, dim + 1)];
+    float v_1 = v_staggered[IDX(j + 1, i, dim + 1)];
+    float v_2 = v_staggered[IDX(j, i, dim + 1)];
+    float delta_v_u_delta_y = v_1 * u_1 - v_2 * u_2;
+
+    float u_3, u_4;
+    if (i == 0) {
+        u_4 = u_3 = u_centered[IDX(j, i, dim)];
+    }
+    else if (i == dim) {
+        u_4 = u_3 = u_centered[IDX(j, i - 1, dim)];
+    }
+    else {
+        u_3 = u_centered[IDX(j, i - 1, dim)];
+        u_4 = u_centered[IDX(j, i, dim)];
+    }
+    float delta_u_u_delta_x = u_4 * u_4 - u_3 * u_3;
+
+    float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
+    output_field[IDX(j, i, dim + 1)] = u_field[IDX(j, i, dim + 1)] + delta_u_delta_t * dt;
 }
 
 
@@ -364,7 +492,43 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
 
 
 void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const float timestep, const float* u, const float* v){
-    //TODO
+    const int DIM = dimensions;
+    const int BLOCK_DIM = 16;
+    const int BLOCK_ROW_COUNT = ((DIM + 1) / BLOCK_DIM) + 1;
+    const dim3 BLOCK(BLOCK_DIM, BLOCK_DIM, 1);
+    const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
+
+    // Setup Device Pointers for u and v
+    float* d_u, * d_v;
+    cudaMalloc(&d_u, (DIM + 1) * DIM * sizeof(float));
+    cudaMalloc(&d_v, DIM * (DIM + 1) * sizeof(float));
+    cudaMemcpy(d_u, u, (DIM + 1) * DIM * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_v, v, DIM * (DIM + 1) * sizeof(float), cudaMemcpyHostToDevice);
+
+    float* d_staggered_v;
+    cudaMalloc(&d_staggered_v, (DIM + 1) * (DIM + 1) * sizeof(float));
+    interpolateStaggeredVelocityY CUDA_CALL(GRID, BLOCK) (d_staggered_v, d_v, DIM);
+
+    float* d_staggered_u;
+    cudaMalloc(&d_staggered_u, (DIM + 1) * (DIM + 1) * sizeof(float));
+    upwindStaggeredVelocityQuickX CUDA_CALL(GRID, BLOCK) (d_staggered_u, d_u, d_staggered_v, DIM);
+
+    float* d_centered_u;
+    cudaMalloc(&d_centered_u, DIM * DIM * sizeof(float));
+    upwindCenteredVelocityQuickX CUDA_CALL(GRID, BLOCK) (d_centered_u, d_u, DIM);
+
+    float* d_out;
+    cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
+    advectVelocityXExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_staggered_u, d_staggered_v, d_centered_u, d_u, DIM, timestep);
+    cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Cleanup
+    cudaFree(d_u);
+    cudaFree(d_v);
+    cudaFree(d_staggered_u);
+    cudaFree(d_staggered_v);
+    cudaFree(d_centered_u);
+    cudaFree(d_out);
 }
 
 
