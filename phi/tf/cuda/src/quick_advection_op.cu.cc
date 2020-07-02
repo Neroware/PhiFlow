@@ -336,34 +336,22 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     cudaMemcpy(d_u, u, (DIM + 1) * DIM * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, DIM * (DIM + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
-    //printf("Initial Velocity Fields:\n");
-    //dumpArray(d_u, DIM + 1, DIM);
-    //dumpArray(d_v, DIM, DIM + 1);
-
     float* d_staggered_u;
     cudaMalloc(&d_staggered_u, (DIM + 1) * (DIM + 1) * sizeof(float));
     interpolateStaggeredVelocityX CUDA_CALL(GRID, BLOCK) (d_staggered_u, d_u, DIM);
-    //printf("\nInterpolated Staggered u:\n");
-    //dumpArray(d_staggered_u, DIM + 1, DIM + 1);
 
     float* d_staggered_v;
     cudaMalloc(&d_staggered_v, (DIM + 1) * (DIM + 1) * sizeof(float));
     upwindStaggeredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_staggered_v, d_staggered_u, d_v, DIM);
-    //printf("\nUpwind Staggered v:\n");
-    //dumpArray(d_staggered_v, DIM + 1, DIM + 1);
 
     float* d_centered_v;
     cudaMalloc(&d_centered_v, DIM * DIM * sizeof(float));
     upwindCenteredVelocityQuickY CUDA_CALL(GRID, BLOCK) (d_centered_v, d_v, DIM);
-    //printf("\nUpwind Centered v:\n");
-    //dumpArray(d_centered_v, DIM, DIM);
 
     float* d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
     advectVelocityYExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_staggered_u, d_staggered_v, d_centered_v, d_v, DIM, timestep);
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
-    //printf("\nResult:\n");
-    //dumpArray(d_out, DIM, DIM + 1);
 
     // Cleanup
     cudaFree(d_u);
