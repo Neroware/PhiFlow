@@ -18,50 +18,42 @@
 
 /* =========================================== Density Advection =====================================*/
 
-__global__ void upwindDensityQuickX(float* output_field, float* rho, float* u, int dim){
+__global__ void upwindDensityQuickX(float* output_field, float* rho, float* u, int dim, int padding){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
     if(i >= dim + 1 || j >= dim){
         return;
     }
- 
-    float vel_u = u[IDX(j, i, dim + 1)];
+
+    int pad = 2 * padding;
+    int i_p = i + padding;
+    int j_p = j + padding;
+
+    float vel_u = u[IDX(j_p, i_p, dim + 1 + pad)];
     if(vel_u == 0.0f){
         output_field[IDX(j, i, dim + 1)] = 0.0f;
     }
     else if(vel_u > 0.0f){
         float rho_R, rho_C, rho_L;
-        rho_R = rho_C = rho_L = 0.0f;
-        if(i < dim){
-            rho_R = rho[IDX(j, i, dim)];
-        }
-        if(i > 0){
-            rho_C = rho[IDX(j, i - 1, dim)];
-        }
-        if(i > 1){
-            rho_L = rho[IDX(j, i - 2, dim)];
-        }
+        rho_R = rho[IDX(j_p, i_p, dim + pad)];
+        rho_C = rho[IDX(j_p, i_p - 1, dim + pad)];
+        rho_L = rho[IDX(j_p, i_p - 2, dim + pad)];
+
         output_field[IDX(j, i, dim + 1)] = 0.5f * (rho_C + rho_R) - 0.125f * (rho_L + rho_R - 2.0f * rho_C);
     }
     else{
         float rho_R, rho_C, rho_FR;
-        rho_R = rho_C = rho_FR = 0.0f;
-        if(i < dim){
-            rho_R = rho[IDX(j, i, dim)];
-        }
-        if(i < dim - 1){
-            rho_FR = rho[IDX(j, i + 1, dim)];
-        }
-        if(i > 0){
-            rho_C = rho[IDX(j, i - 1, dim)];
-        }
+        rho_R = rho[IDX(j_p, i_p, dim + pad)];
+        rho_FR = rho[IDX(j_p, i_p + 1, dim + pad)];
+        rho_C = rho[IDX(j_p, i_p - 1, dim + pad)];
+
         output_field[IDX(j, i, dim + 1)] = 0.5f * (rho_C + rho_R) - 0.125f * (rho_FR + rho_C - 2.0f * rho_R);
     }
 }
 
 
-__global__ void upwindDensityQuickY(float* output_field, float* rho, float* v, int dim){
+__global__ void upwindDensityQuickY(float* output_field, float* rho, float* v, int dim, int padding){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -69,36 +61,28 @@ __global__ void upwindDensityQuickY(float* output_field, float* rho, float* v, i
         return;
     }
 
-    float vel_v = v[IDX(j, i, dim)];
+    int pad = 2 * padding;
+    int i_p = i + padding;
+    int j_p = j + padding;
+
+    float vel_v = v[IDX(j_p, i_p, dim + pad)];
     if(vel_v == 0.0f){
         output_field[IDX(j, i, dim)] = 0.0f;
     }
     else if(vel_v > 0.0f){
         float rho_R, rho_C, rho_L;
-        rho_R = rho_C = rho_L = 0.0f;
-        if(j < dim){
-            rho_R = rho[IDX(j, i, dim)];
-        }
-        if(j > 0){
-            rho_C = rho[IDX(j - 1, i, dim)];
-        }
-        if(j > 1){
-            rho_L = rho[IDX(j - 2, i, dim)];
-        }
+        rho_R = rho[IDX(j_p, i_p, dim + pad)];
+        rho_C = rho[IDX(j_p - 1, i_p, dim + pad)];
+        rho_L = rho[IDX(j_p - 2, i_p, dim + pad)];
+
         output_field[IDX(j, i, dim)] = 0.5f * (rho_C + rho_R) - 0.125f * (rho_L + rho_R - 2.0f * rho_C);
     }
     else{
         float rho_R, rho_C, rho_FR;
-        rho_R = rho_C = rho_FR = 0.0f;
-        if(j < dim){
-            rho_R = rho[IDX(j, i, dim)];
-        }
-        if(j < dim - 1){
-            rho_FR = rho[IDX(j + 1, i, dim)];
-        }
-        if(j > 0){
-            rho_C = rho[IDX(j - 1, i, dim)];
-        }
+        rho_R = rho[IDX(j_p, i_p, dim + pad)];
+        rho_FR = rho[IDX(j_p + 1, i_p, dim + pad)];
+        rho_C = rho[IDX(j_p - 1, i_p, dim + pad)];
+
         output_field[IDX(j, i, dim)] = 0.5f * (rho_C + rho_R) - 0.125f * (rho_FR + rho_C - 2.0f * rho_R);
     }
 }
@@ -433,8 +417,8 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     float *d_staggered_density_x, *d_staggered_density_y;
     cudaMalloc(&d_staggered_density_x, (DIM + 1) * DIM * sizeof(float));
     cudaMalloc(&d_staggered_density_y, DIM * (DIM + 1) * sizeof(float));
-    upwindDensityQuickX CUDA_CALL(GRID, BLOCK) (d_staggered_density_x, d_rho, d_u, DIM);
-    upwindDensityQuickY CUDA_CALL(GRID, BLOCK) (d_staggered_density_y, d_rho, d_v, DIM);
+    upwindDensityQuickX CUDA_CALL(GRID, BLOCK) (d_staggered_density_x, d_rho, d_u, DIM, PADDING);
+    upwindDensityQuickY CUDA_CALL(GRID, BLOCK) (d_staggered_density_y, d_rho, d_v, DIM, PADDING);
     
     // Perform Advection Step with Explicit Euler Timestep
     float *d_out;
