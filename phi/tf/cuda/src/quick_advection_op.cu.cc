@@ -290,7 +290,7 @@ __global__ void upwindCenteredVelocityQuickX(float* output_field, float* u, int 
         u_C = u[IDX(j, i, dim + 1)];
         u_R = u[IDX(j, i + 1, dim + 1)];
         if (i < dim) {
-            v_FR = u[IDX(j, i + 2, dim + 1)];
+            u_FR = u[IDX(j, i + 2, dim + 1)];
         }
         output_field[IDX(j, i, dim)] = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
     }
