@@ -24,8 +24,8 @@ REGISTER_OP("QuickAdvection")
 
 
 void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v);
-//void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
-//void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
+void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
+void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
 
 
 class QuickAdvectionOp : public OpKernel {
@@ -64,10 +64,10 @@ public:
         switch(field_type){
             case 0: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data());
                 break;
-            /*case 1: LaunchQuickVelocityXKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data()); 
+            case 1: LaunchQuickVelocityXKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data()); 
                 break;
             case 2: LaunchQuickVelocityYKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data());
-                break;*/
+                break;
             default:
                 break;
         }
