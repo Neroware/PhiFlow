@@ -49,12 +49,13 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
 
     if(field_type == "density"):
         density_tensor = tf.constant(field.data)
-        velocity_v_field, velocity_u_field = velocity_field.data
+        density_tensor_padded = tf.constant(field.padded(2).data)
+        velocity_v_field, velocity_u_field = velocity_field.padded(2).data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = field.data.shape[1]
         with tf.Session(""):
-            result = quick_op.quick_advection(density_tensor, velocity_u_tensor, velocity_v_tensor, dimensions, dt, 0, 0).eval()
+            result = quick_op.quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor, velocity_v_tensor, dimensions, 2, dt, 0, 0).eval()
             return result
 
     elif(field_type == "velocity"):
