@@ -411,8 +411,10 @@ void dumpArray(float* d_ptr, int dim_x, int dim_y){
 }
 
 
-void LaunchQuickDensityKernel(float* output_field, const int dimensions, const float timestep, const float* rho, const float* u, const float* v){
+void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v){
+    return;
     const int DIM = dimensions;
+    const int PADDING = padding;
     const int BLOCK_DIM = 16;
     const int BLOCK_ROW_COUNT = ((DIM + 1) / BLOCK_DIM) + 1;
     const dim3 BLOCK(BLOCK_DIM, BLOCK_DIM, 1);
@@ -450,7 +452,7 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const f
 }
 
 
-void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const float timestep, const float* u, const float* v) {
+void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v) {
     const int DIM = dimensions;
     const int BLOCK_DIM = 16;
     const int BLOCK_ROW_COUNT = ((DIM + 1) / BLOCK_DIM) + 1;
@@ -491,7 +493,7 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
 }
 
 
-void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const float timestep, const float* u, const float* v){
+void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v){
     const int DIM = dimensions;
     const int BLOCK_DIM = 16;
     const int BLOCK_ROW_COUNT = ((DIM + 1) / BLOCK_DIM) + 1;
