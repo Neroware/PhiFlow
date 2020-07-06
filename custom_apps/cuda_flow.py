@@ -32,7 +32,7 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
 
-        #self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
+        self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
         self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
         world.step(dt=self.timestep)
@@ -101,9 +101,9 @@ class CUDAFlow(App):
             for x in range(0, RESOLUTION[0] + 1):
                 #next.append([0.0, 1.0])
                 if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
-                    next.append([0.25, 0.3])
+                    next.append([0.1, 0.1])
                 else:
-                    next.append([0.25, 0.25])
+                    next.append([0.05, 0.05])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")
