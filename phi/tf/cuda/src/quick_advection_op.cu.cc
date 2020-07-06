@@ -88,13 +88,17 @@ __global__ void upwindDensityQuickY(float* output_field, float* rho, float* v, i
 }
 
 
-__global__ void advectDensityExplicitEuler(float* field, float* rho, float* rho_x, float* rho_y, float* u, float* v, int dim, float dt){
+__global__ void advectDensityExplicitEuler(float* field, float* rho, float* rho_x, float* rho_y, float* u, float* v, int dim, int padding, float dt){
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
     if(i >= dim || j >= dim){
         return;
     }
+
+    int pad = 2 * padding;
+    int i_p = i + padding;
+    int j_p = j + padding;
 
     // Discretize partial derivates
     float rho_x_1 = rho_x[IDX(j, i, dim + 1)];
@@ -113,7 +117,7 @@ __global__ void advectDensityExplicitEuler(float* field, float* rho, float* rho_
     float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
 
     // Perform Explicit Euler
-    field[IDX(j, i, dim)] = rho[IDX(j, i, dim)] + delta_rho_delta_t * dt;
+    field[IDX(j, i, dim)] = rho[IDX(j_p, i_p, dim + pad)] + delta_rho_delta_t * dt;
 }
 
 
@@ -396,7 +400,6 @@ void dumpArray(float* d_ptr, int dim_x, int dim_y){
 
 
 void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v){
-    return;
     const int DIM = dimensions;
     const int PADDING = padding;
     const int BLOCK_DIM = 16;
@@ -423,7 +426,7 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     // Perform Advection Step with Explicit Euler Timestep
     float *d_out;
     cudaMalloc(&d_out, DIM * DIM * sizeof(float));
-    advectDensityExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_rho, d_staggered_density_x, d_staggered_density_y, d_u, d_v, DIM, timestep);
+    advectDensityExplicitEuler CUDA_CALL(GRID, BLOCK) (d_out, d_rho, d_staggered_density_x, d_staggered_density_y, d_u, d_v, DIM, PADDING, timestep);
     cudaMemcpy(output_field, d_out, DIM * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Cleanup
