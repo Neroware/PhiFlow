@@ -48,8 +48,8 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
     """
 
     if(field_type == "density"):
-        density_tensor = tf.constant(field.data)
-        velocity_v_field, velocity_u_field = velocity_field.data
+        density_tensor = tf.constant(field.padded(2).data)
+        velocity_v_field, velocity_u_field = velocity_field.padded(2).data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         dimensions = field.data.shape[1]

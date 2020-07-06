@@ -33,7 +33,7 @@ class CUDAFlow(App):
         dt = self.timestep
 
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
-        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
+        #self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
         world.step(dt=self.timestep)
         
@@ -87,23 +87,16 @@ class CUDAFlow(App):
         """
         Generates a StaggeredGrid, with constant velocity u = (0, 1)
         """
-        #print("Generating Demo StaggeredGrid...")
-        #t_data = np.array([[[[0.0, 1.0], [2.0, 3.0], [None, 5.0]], [[6.0, 7.0], [8.0, 9.0], [None, 11.0]], [[12.0, None], [14.0, None], [None, None]]]], dtype="float32")
-        #t_grid = StaggeredGrid(t_data)
-        #t_data_1, t_data_2 = t_grid.data
-        #print("---> ", t_data_1.data)
-        #print(">>>> ", t_data_2.data)
-        #print("Test End!")
 
         data = []
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                #next.append([0.0, 1.0])
-                if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
-                    next.append([0.1, 0.1])
-                else:
-                    next.append([0.05, 0.05])
+                next.append([0.0, 1.0])
+                #if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
+                #    next.append([0.1, 0.1])
+                #else:
+                #    next.append([0.05, 0.05])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")
