@@ -8,19 +8,23 @@ DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
 from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
 
+import math
+PI = 3.14159
+
 
 
 class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
 
-        self.physics = SimpleFlowPhysics()
+        #self.physics = SimpleFlowPhysics()
+        self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
-        fluid.density = self._get_density_grid_2()
-        #fluid.density = self._get_density_grid()
+        #fluid.density = self._get_density_grid_2()
+        fluid.density = self._get_density_grid()
         #world.add(ConstantVelocity(box[0:100, 0:100], velocity=(1, 0)))
 
         self.add_field('Velocity', lambda: fluid.velocity)
@@ -33,7 +37,7 @@ class CUDAFlow(App):
         dt = self.timestep
 
         #self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
-        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
+        #self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
         world.step(dt=self.timestep)
         
@@ -74,7 +78,7 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0]):
                 if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
-                    next.append([0.0])
+                    next.append([0.1])
                 else:
                     next.append([0.0])
             data.append(next)
@@ -92,10 +96,11 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
-                if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
-                    next.append([0.1, 0.1])
-                else:
-                    next.append([0.1, 0.0])
+                #if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
+                #    next.append([0.1, 0.0])
+                #else:
+                #    next.append([0.1, 0.0])
+                next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")
