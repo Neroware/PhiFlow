@@ -17,8 +17,8 @@ class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
 
-        #self.physics = SimpleFlowPhysics()
-        self.physics = SemiLangFlowPhysics()
+        self.physics = SimpleFlowPhysics()
+        #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
@@ -36,8 +36,8 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
 
-        #self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
-        #self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
+        self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
+        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
         world.step(dt=self.timestep)
         
@@ -78,7 +78,7 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0]):
                 if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
-                    next.append([0.1])
+                    next.append([0.2])
                 else:
                     next.append([0.0])
             data.append(next)
@@ -97,9 +97,10 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
                 #if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
-                #    next.append([0.1, 0.0])
+                #if(x == 1):
+                #    next.append([0.1, 0.2])
                 #else:
-                #    next.append([0.1, 0.0])
+                #    next.append([0.1, 0.1])
                 next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
             data.append(next)
 
