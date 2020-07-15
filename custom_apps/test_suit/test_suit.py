@@ -94,6 +94,14 @@ def run_test_cases(test_cases):
         #vel_100 = test_case.get_velocity()
         den_100 = test_case.get_density()
         array_to_image(den_100[0], test_case.name + "_den_100.jpg")
+
+        for i in range(0, 500):
+            test_case.step()
+
+        #vel_500 = test_case.get_velocity()
+        den_500 = test_case.get_density()
+        array_to_image(den_500[0], test_case.name + "_den_500.jpg")
+
         print("Done!")
 
 
