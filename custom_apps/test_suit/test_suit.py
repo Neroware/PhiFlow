@@ -51,6 +51,9 @@ class TestCase:
 
 
     def get_velocity_y(self):
+        if(semi_langrange_mode):
+            return self.velocity_field.data[0].data
+
         data = np.array(self.velocity_field.data)
         arr = []
         for row in data[0]:
@@ -62,6 +65,9 @@ class TestCase:
 
 
     def get_velocity_x(self):
+        if(semi_langrange_mode):
+            return self.velocity_field.data[1].data
+
         data = np.array(self.velocity_field.data)
         arr = []
         for row in data[0]:
