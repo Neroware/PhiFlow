@@ -102,8 +102,8 @@ __global__ void advectDensityExplicitEuler(float* field, float* rho, float* rho_
     
     float rho_y_1 = rho_y[IDX(j, i, dim)];
     float rho_y_2 = rho_y[IDX(j + 1, i, dim)];
-    float v_1 = v[IDX(j, i, dim)];
-    float v_2 = v[IDX(j + 1, i, dim)];
+    float v_1 = v[pidx(j, i, dim, padding)];
+    float v_2 = v[pidx(j + 1, i, dim, padding)];
     float delta_v_rho_delta_y = v_2 * rho_y_2 - v_1 * rho_y_1;
 
     // Solve Advection Equation

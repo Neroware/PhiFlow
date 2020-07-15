@@ -23,8 +23,8 @@ class CUDAFlow(App):
 
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
-        #fluid.density = self._get_density_grid_2()
-        fluid.density = self._get_density_grid()
+        fluid.density = self._get_density_grid_2()
+        #fluid.density = self._get_density_grid()
         #world.add(ConstantVelocity(box[0:100, 0:100], velocity=(1, 0)))
 
         self.add_field('Velocity', lambda: fluid.velocity)
@@ -71,7 +71,7 @@ class CUDAFlow(App):
 
     def _get_density_grid_2(self):
         """
-        Generates a single spot in the center of the grid
+        Generates a single square in the center of the grid
         """
         data = []
         for y in range(0, RESOLUTION[0]):
@@ -81,6 +81,31 @@ class CUDAFlow(App):
                     next.append([0.2])
                 else:
                     next.append([0.0])
+            data.append(next)
+
+        density_array = np.array([data], dtype="float32")
+        return CenteredGrid(density_array)
+
+
+    def _get_density_grid_3(self):
+        """
+        Generates a single spot in the center of the grid
+        """
+        data = []
+        for y in range(0, RESOLUTION[0]):
+            next = []
+            for x in range(0, RESOLUTION[0]):
+                vx = x - 50
+                vy = y - 50
+                if(vx == 0.0 and vy == 0.0):
+                   vx = 1
+                   vy = 1
+                m = math.sqrt(vx * vx + vy * vy)
+                if(m > 6.0):
+                    m = 0.0
+                else:
+                    m = 1.0
+                next.append([0.1 * m])
             data.append(next)
 
         density_array = np.array([data], dtype="float32")
@@ -97,11 +122,32 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
                 #if(y >= 45 and y <= 55 and x >= 45 and x <= 55):
+                #    next.append([0.1, 0.2])
+                #else:
+                #    next.append([0.1, 0.1])
+
+                #next.append([-0.2, 0.3])
+
+                next.append([0.02 * (y - 50), 0.02 * (x - 50)])
+
                 #if(x == 1):
                 #    next.append([0.1, 0.2])
                 #else:
                 #    next.append([0.1, 0.1])
-                next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
+
+                #next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
+                
+                #next.append([-0.5, -0.2 * (y / 100.0)])
+
+                #vx = x - 50
+                #vy = y - 50
+                #if(vx == 0.0 and vy == 0.0):
+                #    next.append([0.0, 0.0])
+                #else:
+                #    m = 1.0 / math.sqrt(vx * vx + vy * vy)
+                #    vx = 0.5 * m * vx
+                #    vy = 0.5 * m * vy
+                #    next.append([vy, vx])
             data.append(next)
 
         velocity_grid = np.array([data], dtype="float32")
