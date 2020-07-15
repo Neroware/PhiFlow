@@ -58,7 +58,7 @@ class TestCase:
             for col in row:
                 next.append([col[0]])
             arr.append(next)
-        return arr
+        return np.array([arr])
 
 
     def get_velocity_x(self):
@@ -69,7 +69,7 @@ class TestCase:
             for col in row:
                 next.append([col[1]])
             arr.append(next)
-        return arr 
+        return np.array([arr])
 
 
     def get_density(self):
