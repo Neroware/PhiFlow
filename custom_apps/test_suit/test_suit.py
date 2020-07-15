@@ -50,8 +50,26 @@ class TestCase:
                 self.velocity_field = advect.semi_lagrangian(velocity, velocity, dt=dt)
 
 
-    def get_velocity(self):
-        return np.array(self.velocity_field.data)
+    def get_velocity_y(self):
+        data = np.array(self.velocity_field.data)
+        arr = []
+        for row in data:
+            next = []
+            for col in row:
+                next.append([col[0]])
+            arr.append(next)
+        return arr
+
+
+    def get_velocity_x(self):
+        data = np.array(self.velocity_field.data)
+        arr = []
+        for row in data:
+            next = []
+            for col in row:
+                next.append([col[1]])
+            arr.append(next)
+        return arr 
 
 
     def get_density(self):
@@ -78,29 +96,41 @@ def array_to_image(arr, filename):
 def run_test_cases(test_cases):
     for test_case in test_cases:
         print("Starting Test Case '" + test_case.name + "'...")
-        #vel_init = test_case.get_velocity()
+        v_init = test_case.get_velocity_y()
+        u_init = test_case.get_velocity_x()
         den_init = test_case.get_density()
-        array_to_image(den_init[0], test_case.name + "_den_init.jpg")        
+        array_to_image(den_init[0], test_case.name + "_den_init.jpg")
+        array_to_image(v_init[0], test_case.name + "_v_init.jpg")
+        array_to_image(u_init[0], test_case.name + "_u_init.jpg")
 
         test_case.step()
         
-        #vel_1 = test_case.get_velocity()
+        v_1 = test_case.get_velocity_y()
+        u_1 = test_case.get_velocity_x()
         den_1 = test_case.get_density()
         array_to_image(den_1[0], test_case.name + "_den_1.jpg")
+        array_to_image(v_1[0], test_case.name + "_v_1.jpg")
+        array_to_image(u_1[0], test_case.name + "_u_1.jpg")
 
         for i in range(0, 100):
             test_case.step()
 
-        #vel_100 = test_case.get_velocity()
+        v_100 = test_case.get_velocity_y()
+        u_100 = test_case.get_velocity_x()
         den_100 = test_case.get_density()
         array_to_image(den_100[0], test_case.name + "_den_100.jpg")
+        array_to_image(v_100[0], test_case.name + "_v_100.jpg")
+        array_to_image(u_100[0], test_case.name + "_u_100.jpg")
 
         for i in range(0, 500):
             test_case.step()
 
-        #vel_500 = test_case.get_velocity()
-        den_500 = test_case.get_density()
-        array_to_image(den_500[0], test_case.name + "_den_500.jpg")
+        v_600 = test_case.get_velocity_y()
+        u_600 = test_case.get_velocity_x()
+        den_600 = test_case.get_density()
+        array_to_image(den_600[0], test_case.name + "_den_600.jpg")
+        array_to_image(v_600[0], test_case.name + "_v_600.jpg")
+        array_to_image(u_600[0], test_case.name + "_u_600.jpg")
 
         print("Done!")
 
