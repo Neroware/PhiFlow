@@ -53,7 +53,7 @@ class TestCase:
     def get_velocity_y(self):
         data = np.array(self.velocity_field.data)
         arr = []
-        for row in data:
+        for row in data[0]:
             next = []
             for col in row:
                 next.append([col[0]])
@@ -64,7 +64,7 @@ class TestCase:
     def get_velocity_x(self):
         data = np.array(self.velocity_field.data)
         arr = []
-        for row in data:
+        for row in data[0]:
             next = []
             for col in row:
                 next.append([col[1]])
