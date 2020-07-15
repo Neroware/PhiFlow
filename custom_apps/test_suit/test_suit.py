@@ -61,11 +61,18 @@ class TestCase:
 
 
 def array_to_image(arr, filename):
+    img = []
+    for row in arr:
+        next = []
+        for col in row:
+            next.append(col[0])
+        img.append(next)
+
     dirname = "quick"
     if semi_langrange_mode:
         dirname = "semi_lagrange" 
     
-    plt.imsave('outputs/' + dirname + '/' + filename, arr)
+    plt.imsave('outputs/' + dirname + '/' + filename, img)
 
 
 def run_test_cases(test_cases):
@@ -73,20 +80,20 @@ def run_test_cases(test_cases):
         print("Starting Test Case '" + test_case.name + "'...")
         #vel_init = test_case.get_velocity()
         den_init = test_case.get_density()
-        array_to_image(den_init, test_case.name + "_den_init.jpg")        
+        array_to_image(den_init[0], test_case.name + "_den_init.jpg")        
 
         test_case.step()
         
         #vel_1 = test_case.get_velocity()
         den_1 = test_case.get_density()
-        array_to_image(den_1, test_case.name + "_den_1.jpg")
+        array_to_image(den_1[0], test_case.name + "_den_1.jpg")
 
         for i in range(0, 100):
             test_case.step()
 
         #vel_100 = test_case.get_velocity()
         den_100 = test_case.get_density()
-        array_to_image(den_100, test_case.name + "_den_100.jpg")
+        array_to_image(den_100[0], test_case.name + "_den_100.jpg")
         print("Done!")
 
 
