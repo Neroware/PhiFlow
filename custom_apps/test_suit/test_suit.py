@@ -196,10 +196,6 @@ TEST_CASES.append(case_1)
 
 
 ### Test 2 ###
-velocity_array = np.array([data], dtype="float32")
-velocity_field = StaggeredGrid(velocity_array)
-density_array = np.array([data], dtype="float32")
-density_field = CenteredGrid(density_array)
 if not semi_langrange_mode:
     case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
 else:
