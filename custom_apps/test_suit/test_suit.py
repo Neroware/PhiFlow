@@ -119,7 +119,6 @@ def run_test_cases(test_cases):
     for test_case in test_cases:
         print("Starting Test Case '" + test_case.name + "'...")
         v_init = test_case.get_velocity_y()
-        #print(">>>>> ", v_init)
         u_init = test_case.get_velocity_x()
         den_init = test_case.get_density()
         array_to_image(den_init[0], test_case.name, test_case.name + "_den_init.jpg")
@@ -129,7 +128,6 @@ def run_test_cases(test_cases):
         test_case.step()
         
         v_1 = test_case.get_velocity_y()
-        #print("-----> ", v_1)
         u_1 = test_case.get_velocity_x()
         den_1 = test_case.get_density()
         array_to_image(den_1[0], test_case.name, test_case.name + "_den_1.jpg")
@@ -228,7 +226,113 @@ else:
 TEST_CASES.append(case_2)
 
 
+### Case 3 ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        vx = x - 50
+        vy = y - 50
+        if(vx == 0.0 and vy == 0.0):
+            vx = 1
+            vy = 1
+            m = math.sqrt(vx * vx + vy * vy)
+            if(m > 6.0):
+                m = 0.0
+            else:
+                m = 1.0
+            next.append([0.1 * m])
+        data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
 
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        next.append([0.02 * (y - 50), 0.02 * (x - 50)])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_3 = TestCase("Escape_1", velocity_array, density_array, 0.1, vel_constant=True)
+else:
+    case_3 = TestCase("Escape_1", velocity_field, density_field, 0.1, vel_constant=True)
+TEST_CASES.append(case_3)
+
+
+### Case 4 ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        vx = x - 50
+        vy = y - 50
+        if(vx == 0.0 and vy == 0.0):
+            vx = 1
+            vy = 1
+            m = math.sqrt(vx * vx + vy * vy)
+            if(m > 6.0):
+                m = 0.0
+            else:
+                m = 1.0
+            next.append([0.1 * m])
+        data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        next.append([0.02 * (y - 50), 0.02 * (x - 50)])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_4 = TestCase("Escape_2", velocity_array, density_array, 0.1)
+else:
+    case_4 = TestCase("Escape_2", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_4)
 
 run_test_cases(TEST_CASES)
 
+
+### Case 5 ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        vx = x - 50
+        vy = y - 50
+        if(vx == 0.0 and vy == 0.0):
+            vx = 1
+            vy = 1
+            m = math.sqrt(vx * vx + vy * vy)
+            if(m > 6.0):
+                m = 0.0
+            else:
+                m = 1.0
+            next.append([0.1 * m])
+        data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        next.append([-0.2, 0.1])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_4 = TestCase("Simple_Stream", velocity_array, density_array, 0.1)
+else:
+    case_4 = TestCase("Simple_Stream", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_4)
+
+run_test_cases(TEST_CASES)
