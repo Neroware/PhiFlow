@@ -19,6 +19,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import cProfile
+
 PI = 3.14159
 
 semi_langrange_mode = False
@@ -36,14 +38,14 @@ class TestCase:
         self.vel_constant = vel_constant
 
 
-    def step(self): 
+    def step(self):
         if not semi_langrange_mode:
             try:
                 velocity = StaggeredGrid(self.velocity_field)
             except:
                 velocity = self.velocity_field
             density = CenteredGrid(self.density_field)
-            dt = self.timestep            
+            dt = self.timestep
             self.density_field = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
             if not self.vel_constant:
                 self.velocity_field = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
@@ -124,7 +126,7 @@ def run_test_cases(test_cases):
         array_to_image(den_init[0], test_case.name, test_case.name + "_den_init.jpg")
         array_to_image(v_init[0], test_case.name, test_case.name + "_v_init.jpg")
         array_to_image(u_init[0], test_case.name, test_case.name + "_u_init.jpg")
-
+        
         test_case.step()
         
         v_1 = test_case.get_velocity_y()
@@ -190,7 +192,7 @@ if not semi_langrange_mode:
     case_1 = TestCase("Sin_xy", velocity_array, density_array, 0.1, vel_constant=True)
 else:
     case_1 = TestCase("Sin_xy", velocity_field, density_field, 0.1, vel_constant=True)
-#TEST_CASES.append(case_1)
+TEST_CASES.append(case_1)
 
 
 ### Case 2 ###
@@ -223,7 +225,7 @@ if not semi_langrange_mode:
     case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
 else:
     case_2 = TestCase("Sin_xy_2", velocity_field, density_field, 0.1)
-#TEST_CASES.append(case_2)
+TEST_CASES.append(case_2)
 
 
 ### Case 3 ###
@@ -259,7 +261,7 @@ if not semi_langrange_mode:
     case_3 = TestCase("Escape_1", velocity_array, density_array, 0.1, vel_constant=True)
 else:
     case_3 = TestCase("Escape_1", velocity_field, density_field, 0.1, vel_constant=True)
-#TEST_CASES.append(case_3)
+TEST_CASES.append(case_3)
 
 
 ### Case 4 ###
@@ -333,4 +335,5 @@ else:
     case_5 = TestCase("Simple_Stream", velocity_field, density_field, 0.1)
 TEST_CASES.append(case_5)
 
-run_test_cases(TEST_CASES)
+cProfile.run('run_test_cases(TEST_CASES)')
+#run_test_cases(TEST_CASES)
