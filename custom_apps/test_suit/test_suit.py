@@ -146,15 +146,15 @@ def run_test_cases(test_cases):
         array_to_image(v_100[0], test_case.name, test_case.name + "_v_100.jpg")
         array_to_image(u_100[0], test_case.name, test_case.name + "_u_100.jpg")
 
-        for i in range(0, 500):
+        for i in range(0, 300):
             test_case.step()
 
-        v_600 = test_case.get_velocity_y()
-        u_600 = test_case.get_velocity_x()
-        den_600 = test_case.get_density()
-        array_to_image(den_600[0], test_case.name, test_case.name + "_den_600.jpg")
-        array_to_image(v_600[0], test_case.name, test_case.name + "_v_600.jpg")
-        array_to_image(u_600[0], test_case.name, test_case.name + "_u_600.jpg")
+        v_300 = test_case.get_velocity_y()
+        u_300 = test_case.get_velocity_x()
+        den_300 = test_case.get_density()
+        array_to_image(den_300[0], test_case.name, test_case.name + "_den_300.jpg")
+        array_to_image(v_300[0], test_case.name, test_case.name + "_v_300.jpg")
+        array_to_image(u_300[0], test_case.name, test_case.name + "_u_300.jpg")
 
         print("Done!")
 
@@ -189,22 +189,22 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_1 = TestCase("Sin_xy", velocity_array, density_array, 0.1, vel_constant=False)
+    case_1 = TestCase("Sin_xy", velocity_array, density_array, 0.1, vel_constant=True)
 else:
-    case_1 = TestCase("Sin_xy", velocity_field, density_field, 0.1, vel_constant=False)
+    case_1 = TestCase("Sin_xy", velocity_field, density_field, 0.1, vel_constant=True)
 TEST_CASES.append(case_1)
 
 
 ### Test 2 ###
-#velocity_array = np.array([data], dtype="float32")
-#velocity_field = StaggeredGrid(velocity_array)
-#density_array = np.array([data], dtype="float32")
-#density_field = CenteredGrid(density_array)
-#if not semi_langrange_mode:
-#    case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
-#else:
-#    case_2 = TestCase("Sin_xy_2", velocity_field, density_field, 0.1)
-#TEST_CASES.append(case_2)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+if not semi_langrange_mode:
+    case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
+else:
+    case_2 = TestCase("Sin_xy_2", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_2)
 
 
 
