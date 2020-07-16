@@ -195,7 +195,32 @@ else:
 TEST_CASES.append(case_1)
 
 
-### Test 2 ###
+### Case 2 ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        if x % 8 <= 3 and y % 8 <= 3:
+            next.append([0.5])
+        elif x % 8 > 3 and y % 8 <= 3:
+            next.append([1.0])
+        elif x % 8 <= 3 and y % 8 > 3:
+            next.append([1.0])
+        else:
+            next.append([0.5])
+    data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
 if not semi_langrange_mode:
     case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
 else:
