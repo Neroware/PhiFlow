@@ -15,8 +15,8 @@ from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
 from phi.physics.field.advect import semi_lagrangian
 
 import math
-import matplotlib
-matplotlib.use("Agg")
+import matplotlib as mpl
+mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 import cProfile
@@ -108,6 +108,19 @@ class TestCase:
 
 
 
+def colorbar_to_image(min_value, max_value, dir_name, case_name, file_name, descr):
+    fig, ax = plt.subplots(figsize=(6, 1))
+    fig.subplots_adjust(bottom=0.5)
+
+    cmap = mpl.cm.cool
+    norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
+
+    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
+    cb1.set_label(descr)
+    fig.savefig("outputs/" + dir_name + "/" + case_name + "/" + file_name + ".jpg")
+    
+
+
 
 def array_to_image(arr, dirname, filename, min_value, max_value):
     test_dir = "quick"
@@ -133,6 +146,12 @@ def run_test_cases(test_cases):
         print("Starting Test Case '" + test_case.name + "'...")
         vel_min, vel_max = test_case.get_velocity_interval()
         den_min, den_max = test_case.get_density_interval()
+
+        mode = "quick"
+        if semi_langrange_mode:
+            mode = "semi_lagrange"
+        colorbar_to_image(vel_min, vel_max, mode, test_case.name, "Velocity", "Velocity")
+        colorbar_to_image(den_min, den_max, mode, test_case.name, "Density", "Density")
 
         v_init = test_case.get_velocity_y()
         u_init = test_case.get_velocity_x()
