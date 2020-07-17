@@ -30,12 +30,14 @@ if not 'quick' in sys.argv:
 
 
 class TestCase:
-    def __init__(self, name, velocity_field, density_field, timestep, vel_constant=False):
+    def __init__(self, name, velocity_field, density_field, timestep, vel_constant=False, den_interval=(-0.1, 0.4), vel_interval=(-0.4, 0.4)):
         self.name = name
         self.velocity_field = velocity_field
         self.density_field = density_field
         self.timestep = timestep
         self.vel_constant = vel_constant
+        self.den_interval = den_interval
+        self.vel_interval = vel_interval
 
 
     def step(self):
@@ -97,9 +99,17 @@ class TestCase:
         return np.array(self.density_field.data)
 
 
+    def get_density_interval(self):
+        return self.den_interval
 
 
-def array_to_image(arr, dirname, filename):
+    def get_velocity_interval(self):
+        return self.vel_interval
+
+
+
+
+def array_to_image(arr, dirname, filename, min_value, max_value):
     test_dir = "quick"
     if semi_langrange_mode:
         test_dir = "semi_lagrange"
@@ -115,27 +125,30 @@ def array_to_image(arr, dirname, filename):
         for col in row:
             next.append(col[0])
         img.append(next) 
-    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-0.1, vmax=0.4)
+    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=min_value, vmax=max_value)
 
 
 def run_test_cases(test_cases):
     for test_case in test_cases:
         print("Starting Test Case '" + test_case.name + "'...")
+        vel_min, vel_max = test_case.get_velocity_interval()
+        den_min, den_max = test_case.get_density_interval()
+
         v_init = test_case.get_velocity_y()
         u_init = test_case.get_velocity_x()
         den_init = test_case.get_density()
-        array_to_image(den_init[0], test_case.name, test_case.name + "_den_init.jpg")
-        array_to_image(v_init[0], test_case.name, test_case.name + "_v_init.jpg")
-        array_to_image(u_init[0], test_case.name, test_case.name + "_u_init.jpg")
+        array_to_image(den_init[0], test_case.name, test_case.name + "_den_init.jpg", den_min, den_max)
+        array_to_image(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
+        array_to_image(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
         
         test_case.step()
         
         v_1 = test_case.get_velocity_y()
         u_1 = test_case.get_velocity_x()
         den_1 = test_case.get_density()
-        array_to_image(den_1[0], test_case.name, test_case.name + "_den_1.jpg")
-        array_to_image(v_1[0], test_case.name, test_case.name + "_v_1.jpg")
-        array_to_image(u_1[0], test_case.name, test_case.name + "_u_1.jpg")
+        array_to_image(den_1[0], test_case.name, test_case.name + "_den_1.jpg", den_min, den_max)
+        array_to_image(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
+        array_to_image(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
 
         for i in range(0, 100):
             test_case.step()
@@ -143,9 +156,9 @@ def run_test_cases(test_cases):
         v_100 = test_case.get_velocity_y()
         u_100 = test_case.get_velocity_x()
         den_100 = test_case.get_density()
-        array_to_image(den_100[0], test_case.name, test_case.name + "_den_100.jpg")
-        array_to_image(v_100[0], test_case.name, test_case.name + "_v_100.jpg")
-        array_to_image(u_100[0], test_case.name, test_case.name + "_u_100.jpg")
+        array_to_image(den_100[0], test_case.name, test_case.name + "_den_100.jpg", den_min, den_max)
+        array_to_image(v_100[0], test_case.name, test_case.name + "_v_100.jpg", vel_min, vel_max)
+        array_to_image(u_100[0], test_case.name, test_case.name + "_u_100.jpg", vel_min, vel_max)
 
         for i in range(0, 300):
             test_case.step()
@@ -153,9 +166,9 @@ def run_test_cases(test_cases):
         v_300 = test_case.get_velocity_y()
         u_300 = test_case.get_velocity_x()
         den_300 = test_case.get_density()
-        array_to_image(den_300[0], test_case.name, test_case.name + "_den_300.jpg")
-        array_to_image(v_300[0], test_case.name, test_case.name + "_v_300.jpg")
-        array_to_image(u_300[0], test_case.name, test_case.name + "_u_300.jpg")
+        array_to_image(den_300[0], test_case.name, test_case.name + "_den_300.jpg", den_min, den_max)
+        array_to_image(v_300[0], test_case.name, test_case.name + "_v_300.jpg", vel_min, vel_max)
+        array_to_image(u_300[0], test_case.name, test_case.name + "_u_300.jpg", vel_min, vel_max)
 
         print("Done!")
 
