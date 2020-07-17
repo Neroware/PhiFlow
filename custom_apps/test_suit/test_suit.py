@@ -115,7 +115,7 @@ def array_to_image(arr, dirname, filename):
         for col in row:
             next.append(col[0])
         img.append(next) 
-    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-0.5, vmax=0.5)
+    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-0.1, vmax=0.4)
 
 
 def run_test_cases(test_cases):
@@ -169,13 +169,13 @@ for y in range(0, RESOLUTION[0]):
     next = []
     for x in range(0, RESOLUTION[0]):
         if x % 8 <= 3 and y % 8 <= 3:
-            next.append([0.5])
+            next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
-            next.append([1.0])
+            next.append([0.2])
         elif x % 8 <= 3 and y % 8 > 3:
-            next.append([1.0])
+            next.append([0.2])
         else:
-            next.append([0.5])
+            next.append([0.1])
     data.append(next)
 density_array = np.array([data], dtype="float32")
 density_field = CenteredGrid(density_array)
@@ -202,13 +202,13 @@ for y in range(0, RESOLUTION[0]):
     next = []
     for x in range(0, RESOLUTION[0]):
         if x % 8 <= 3 and y % 8 <= 3:
-            next.append([0.5])
+            next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
-            next.append([1.0])
+            next.append([0.2])
         elif x % 8 <= 3 and y % 8 > 3:
-            next.append([1.0])
+            next.append([0.2])
         else:
-            next.append([0.5])
+            next.append([0.1])
     data.append(next)
 density_array = np.array([data], dtype="float32")
 density_field = CenteredGrid(density_array)
