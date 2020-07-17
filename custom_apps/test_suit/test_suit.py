@@ -115,7 +115,7 @@ def array_to_image(arr, dirname, filename):
         for col in row:
             next.append(col[0])
         img.append(next) 
-    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-1.0, vmax=1.0)
+    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-0.5, vmax=0.5)
 
 
 def run_test_cases(test_cases):
