@@ -46,6 +46,7 @@ class TestCase:
                 velocity = self.velocity_field
             density = CenteredGrid(self.density_field)
             dt = self.timestep
+            tf.compat.v1.reset_default_graph()
             self.density_field = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
             if not self.vel_constant:
                 self.velocity_field = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
@@ -114,7 +115,7 @@ def array_to_image(arr, dirname, filename):
         for col in row:
             next.append(col[0])
         img.append(next) 
-    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img)
+    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=-1.0, vmax=1.0)
 
 
 def run_test_cases(test_cases):
@@ -335,5 +336,5 @@ else:
     case_5 = TestCase("Simple_Stream", velocity_field, density_field, 0.1)
 TEST_CASES.append(case_5)
 
-cProfile.run('run_test_cases(TEST_CASES)')
-#run_test_cases(TEST_CASES)
+#cProfile.run('run_test_cases(TEST_CASES)')
+run_test_cases(TEST_CASES)
