@@ -257,7 +257,7 @@ for y in range(0, RESOLUTION[0]):
             m = 0.0
         else:
             m = 1.0
-        next.append([0.1 * m])
+        next.append([0.3 * m])
     data.append(next)
 density_array = np.array([data], dtype="float32")
 density_field = CenteredGrid(density_array)
@@ -266,7 +266,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        next.append([0.02 * (y - 50), 0.02 * (x - 50)])
+        next.append([0.005 * (y - 50), 0.005 * (x - 50)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
@@ -293,7 +293,7 @@ TEST_CASES.append(case_3)
 #            m = 0.0
 #        else:
 #            m = 1.0
-#        next.append([0.1 * m])
+#        next.append([0.3 * m])
 #    data.append(next)
 #density_array = np.array([data], dtype="float32")
 #density_field = CenteredGrid(density_array)
@@ -302,7 +302,7 @@ TEST_CASES.append(case_3)
 #for y in range(0, RESOLUTION[0] + 1):
 #    next = []
 #    for x in range(0, RESOLUTION[0] + 1):
-#        next.append([0.02 * (y - 50), 0.02 * (x - 50)])
+#        next.append([0.005 * (y - 50), 0.005 * (x - 50)])
 #    data.append(next)
 #velocity_array = np.array([data], dtype="float32")
 #velocity_field = StaggeredGrid(velocity_array)
@@ -329,7 +329,7 @@ for y in range(0, RESOLUTION[0]):
             m = 0.0
         else:
             m = 1.0
-        next.append([0.1 * m])
+        next.append([0.3 * m])
     data.append(next)
 density_array = np.array([data], dtype="float32")
 density_field = CenteredGrid(density_array)
