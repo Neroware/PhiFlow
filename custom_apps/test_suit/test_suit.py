@@ -127,7 +127,7 @@ def plot_grid(data, dirname, filename, min_value, max_value):
     viridis = cm.get_cmap("viridis", 256)
     cms = [viridis]
    
-    fig, axs = plt.subplots(1, 1, figsize=(6, 8), constrained_layout=True)
+    fig, axs = plt.subplots(1, 1, figsize=(8, 6), constrained_layout=True)
     for [ax, cmap] in zip([axs], cms):
         psm = ax.pcolormesh(img, cmap=cmap, rasterized=True, vmin=min_value, vmax=max_value)
         fig.colorbar(psm, ax=ax)
