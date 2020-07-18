@@ -15,11 +15,16 @@ from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
 from phi.physics.field.advect import semi_lagrangian
 
 import math
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
-import cProfile
+#import cProfile
+
+
+
 
 PI = 3.14159
 
@@ -107,38 +112,56 @@ class TestCase:
         return self.vel_interval
 
 
-
-def colorbar_to_image(min_value, max_value, dir_name, case_name, file_name, descr):
-    fig, ax = plt.subplots(figsize=(6, 1))
-    fig.subplots_adjust(bottom=0.5)
-
-    cmap = mpl.cm.cool
-    norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
-
-    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
-    cb1.set_label(descr)
-    fig.savefig("outputs/" + dir_name + "/" + case_name + "/" + file_name + ".jpg")
-    
-
-
-
-def array_to_image(arr, dirname, filename, min_value, max_value):
+def plot_grid(data, dirname, filename, min_value, max_value):
     test_dir = "quick"
     if semi_langrange_mode:
         test_dir = "semi_lagrange"
 
-    try:
-        os.mkdir('outputs/' + test_dir + '/' + dirname)
-    except OSError:
-        pass
+    np.random.seed(19680801)
+    data = np.random.randn(30, 30)
+
+    viridis = cm.get_cmap("viridis", 256)
+    cms = [viridis]
+   
+    fig, axs = plt.subplots(1, 1, figsize=(3, 3), constrained_layout=True)
+    for [ax, cmap] in zip([axs], cms):
+        psm = ax.pcolormesh(data, cmap=cmap, rasterized=True, vmin=min_value, vmax=max_value)
+        fig.colorbar(psm, ax=ax)
+    fig.savefig("outputs/" + test_dir + "/" + dirname + "/" + filename)
+    plt.close()
+
+
+#def colorbar_to_image(min_value, max_value, dir_name, case_name, file_name, descr):
+#    fig, ax = plt.subplots(figsize=(6, 1))
+#    fig.subplots_adjust(bottom=0.5)
+#
+#    cmap = mpl.cm.cool
+#    norm = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
+#
+#    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
+#    cb1.set_label(descr)
+#    fig.savefig("outputs/" + dir_name + "/" + case_name + "/" + file_name + ".jpg")
     
-    img = []
-    for row in arr:
-        next = []
-        for col in row:
-            next.append(col[0])
-        img.append(next) 
-    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=min_value, vmax=max_value)
+
+
+
+#def array_to_image(arr, dirname, filename, min_value, max_value):
+#    test_dir = "quick"
+#    if semi_langrange_mode:
+#        test_dir = "semi_lagrange"
+#
+#    try:
+#        os.mkdir('outputs/' + test_dir + '/' + dirname)
+#    except OSError:
+#        pass
+#    
+#    img = []
+#    for row in arr:
+#        next = []
+#        for col in row:
+#            next.append(col[0])
+#        img.append(next) 
+#    plt.imsave('outputs/' + test_dir + '/' + dirname + '/' + filename, img, vmin=min_value, vmax=max_value)
 
 
 def run_test_cases(test_cases):
@@ -150,24 +173,24 @@ def run_test_cases(test_cases):
         mode = "quick"
         if semi_langrange_mode:
             mode = "semi_lagrange"
-        colorbar_to_image(vel_min, vel_max, mode, test_case.name, "Velocity", "Velocity")
-        colorbar_to_image(den_min, den_max, mode, test_case.name, "Density", "Density")
+        #colorbar_to_image(vel_min, vel_max, mode, test_case.name, "Velocity", "Velocity")
+        #colorbar_to_image(den_min, den_max, mode, test_case.name, "Density", "Density")
 
         v_init = test_case.get_velocity_y()
         u_init = test_case.get_velocity_x()
         den_init = test_case.get_density()
-        array_to_image(den_init[0], test_case.name, test_case.name + "_den_init.jpg", den_min, den_max)
-        array_to_image(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
-        array_to_image(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
+        plot_grid(den_init[0], test_case.name, test_case.name + "_den_init.jpg", den_min, den_max)
+        plot_grid(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
+        plot_grid(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
         
         test_case.step()
         
         v_1 = test_case.get_velocity_y()
         u_1 = test_case.get_velocity_x()
         den_1 = test_case.get_density()
-        array_to_image(den_1[0], test_case.name, test_case.name + "_den_1.jpg", den_min, den_max)
-        array_to_image(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
-        array_to_image(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
+        plot_grid(den_1[0], test_case.name, test_case.name + "_den_1.jpg", den_min, den_max)
+        plot_grid(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
+        plot_grid(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
 
         for i in range(0, 100):
             test_case.step()
@@ -175,9 +198,9 @@ def run_test_cases(test_cases):
         v_100 = test_case.get_velocity_y()
         u_100 = test_case.get_velocity_x()
         den_100 = test_case.get_density()
-        array_to_image(den_100[0], test_case.name, test_case.name + "_den_100.jpg", den_min, den_max)
-        array_to_image(v_100[0], test_case.name, test_case.name + "_v_100.jpg", vel_min, vel_max)
-        array_to_image(u_100[0], test_case.name, test_case.name + "_u_100.jpg", vel_min, vel_max)
+        plot_grid(den_100[0], test_case.name, test_case.name + "_den_100.jpg", den_min, den_max)
+        plot_grid(v_100[0], test_case.name, test_case.name + "_v_100.jpg", vel_min, vel_max)
+        plot_grid(u_100[0], test_case.name, test_case.name + "_u_100.jpg", vel_min, vel_max)
 
         for i in range(0, 300):
             test_case.step()
@@ -185,9 +208,9 @@ def run_test_cases(test_cases):
         v_300 = test_case.get_velocity_y()
         u_300 = test_case.get_velocity_x()
         den_300 = test_case.get_density()
-        array_to_image(den_300[0], test_case.name, test_case.name + "_den_300.jpg", den_min, den_max)
-        array_to_image(v_300[0], test_case.name, test_case.name + "_v_300.jpg", vel_min, vel_max)
-        array_to_image(u_300[0], test_case.name, test_case.name + "_u_300.jpg", vel_min, vel_max)
+        plot_grid(den_300[0], test_case.name, test_case.name + "_den_300.jpg", den_min, den_max)
+        plot_grid(v_300[0], test_case.name, test_case.name + "_v_300.jpg", vel_min, vel_max)
+        plot_grid(u_300[0], test_case.name, test_case.name + "_u_300.jpg", vel_min, vel_max)
 
         print("Done!")
 
