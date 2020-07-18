@@ -117,15 +117,19 @@ def plot_grid(data, dirname, filename, min_value, max_value):
     if semi_langrange_mode:
         test_dir = "semi_lagrange"
 
-    np.random.seed(19680801)
-    data = np.random.randn(30, 30)
+    img = []
+    for row in data:
+        next = []
+        for col in row:
+            next.append(col[0])
+        img.append(next)
 
     viridis = cm.get_cmap("viridis", 256)
     cms = [viridis]
    
     fig, axs = plt.subplots(1, 1, figsize=(3, 3), constrained_layout=True)
     for [ax, cmap] in zip([axs], cms):
-        psm = ax.pcolormesh(data, cmap=cmap, rasterized=True, vmin=min_value, vmax=max_value)
+        psm = ax.pcolormesh(img, cmap=cmap, rasterized=True, vmin=min_value, vmax=max_value)
         fig.colorbar(psm, ax=ax)
     fig.savefig("outputs/" + test_dir + "/" + dirname + "/" + filename)
     plt.close()
