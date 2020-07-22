@@ -4,3 +4,5 @@ rm -r Simple_Stream/*
 rm -r Sin_xy/*
 rm -r Sin_xy_2/*
 rm -r Center_1/*
+rm -r Vel_Y_Block/*
+rm -r Vel_X_Block/*
