@@ -36,7 +36,7 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
 
-        print(">>>>> ", self.fluid.density)
+        #print(">>>>> ", self.fluid.density)
 
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
         self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
