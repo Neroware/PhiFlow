@@ -134,9 +134,10 @@ class CUDAFlow(App):
                 #next.append([-0.2, 0.3])
                 
                 if(x < 3):
-                    next.append([0.0, 0.1])
-                else:
                     next.append([0.0, -0.1])
+                else:
+                    next.append([0.0, 0.1])
+                #next.append[0.1, 0.0])
 
                 #next.append([0.02 * (y - 50), 0.02 * (x - 50)])
 

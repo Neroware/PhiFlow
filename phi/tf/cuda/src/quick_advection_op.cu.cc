@@ -74,8 +74,8 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     }
 
     float u1, u2;
-    u1 = u[pidx(j, i, dim, padding)];
-    u2 = u[pidx(j, i + 1, dim, padding)];
+    u1 = u[pidx(j, i, dim + 1, padding)];
+    u2 = u[pidx(j, i + 1, dim + 1, padding)];
     float cs_u[5];
     for (int k = 0; k < 5; k++) {
         cs_u[k] = coefficients(k, u1, u2);
