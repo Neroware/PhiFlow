@@ -26,7 +26,7 @@ __device__ int pidx(int i, int j, int dim, int padding) {
 /**
  * v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j) respectivly
  */
-__device__ void coefficients(float idx, float vel1, float vel2) {
+__device__ float coefficients(int idx, float vel1, float vel2) {
     float c[5];
     c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
 
@@ -65,7 +65,7 @@ __device__ void coefficients(float idx, float vel1, float vel2) {
 /* =========================================== Density Advection =====================================*/
 
 
-__global__ advectDensityQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectDensityQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
