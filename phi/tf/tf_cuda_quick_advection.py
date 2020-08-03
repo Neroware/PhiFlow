@@ -51,6 +51,7 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
     if(field_type == "density"):
         density_tensor = tf.constant(field.data)
         density_tensor_padded = tf.constant(field.padded(2).data)
+        print("::::> ", field.padded(2).data)
         velocity_v_field, velocity_u_field = velocity_field.data
         velocity_v_tensor = tf.constant(velocity_v_field.padded(2).data)
         velocity_u_tensor = tf.constant(velocity_u_field.padded(2).data)
@@ -78,40 +79,51 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
     return []
 
 
-def tf_cuda_delta_rho_delta_vel(velocity_field, density_field, dt, h):
-    """
-    Numerically solves the partial derivate 'delta rho(t+dt) / delta v(t)' using finite differences
-    :param velocity_field: Velocity as Staggered Grid
-    :param density_field:  Density as Centered Grid
+def tf_cuda_calculate_coefficients_quick_advection(velocity_field, i, j, dt):
+    """ 
+    Returns the coefficients needed to calculate rho(t+1) at (i,j)
+    :param velocity_field: Staggered Grid with velocity entries
+    :param i:              Density Cell X-coordinate
+    :param j:              Density Cell Y-coordinate
     :param dt:             Timestep
-    :param h:              Approximation unit for finite differences
-    :return:               At which rate changes rho(t+1) depending on v(t) and u(t), Tuple(v, u)
+    :return:               v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j)
     """
-    density_tensor = tf.constant(density_field.data)
-    density_tensor_padded = tf.constant(density_field.padded(2).data)
-    dimensions = density_field.data.shape[1]
+    def coefficients(vel1, vel2):
+        c1 = c2 = c3 = c4 = c5 = 0.0
+        
+        if(vel1 >= 0 and vel2 >= 0):
+            c1 = 0.125 * vel1
+            c2 = -0.125 * vel2 - 0.75 * vel1
+            c3 = 0.75 * vel2 - 0.375 * vel1
+            c4 = 0.375 * vel2
+        
+        elif(vel1 <= 0 and vel2 <= 0):
+            c2 = -0.375 * vel1
+            c3 = 0.375 * vel2 - 0.75 * vel1
+            c4 = 0.75 * vel2 + 0.125 * vel1
+            c5 = -0.125 * vel2
+
+        elif(vel1 < 0 and vel2 > 0):
+            c2 = -0.125 * vel2 - 0.375 * vel1
+            c3 = 0.75 * vel2 - 0.75 * vel1 
+            c4 = 0.375 * vel2 + 0.125 * vel1
+
+        else:
+            c1 = 0.125 * vel1
+            c2 = -0.75 * vel1
+            c3 = 0.375 * vel2 - 0.375 * vel1
+            c4 = 0.75 * vel2
+            c5 = -0.125 * vel1
+
+        return (c1, c2, c3, c4, c5)
 
     velocity_v_field, velocity_u_field = velocity_field.data
-    velocity_v_tensor = tf.constant(velocity_v_field.padded(2).data)
-    velocity_u_tensor = tf.constant(velocity_u_field.padded(2).data)
+    u1 = velocity_u_field.data[j][i]
+    u2 = velocity_u_field.data[j][i + 1]
+    v1 = velocity_v_field.data[j][i]
+    v2 = velocity_v_field.data[j + 1][i]
 
-    dim = dimensions + 4 # For padding(2) !!!
-    h_tensor_x = tf.constant(np.full((1, dim, dim + 1, 1), h, dtype="float32"))
-    h_tensor_y = tf.constant(np.full((1, dim + 1, dim, 1), h, dtype="float32"))
-    velocity_v_tensor_2 = velocity_v_tensor + h_tensor_y
-    velocity_u_tensor_2 = velocity_u_tensor + h_tensor_x
+    u_coefficients = coefficients(u1, u2)
+    v_coefficients = coefficients(v1, v2)
 
-    with tf.compat.v1.Session(""):
-        result_rho_tensor = quick_op.quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor, velocity_v_tensor, dimensions, 2, dt, 0, 0)
-
-        # For delta u:
-        result_rho_2_tensor = quick_op.quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_2, velocity_v_tensor, dimensions, 2, dt, 0, 0)
-        result_delta_rho_delta_u = (result_rho_tensor - result_rho_2_tensor) * (1.0 / h)
-
-        # For delta v:
-        result_rho_3_tensor = quick_op.quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor, velocity_v_tensor_2, dimensions, 2, dt, 0, 0)
-        result_delta_rho_delta_v = (result_rho_tensor - result_rho_3_tensor) * (1.0 / h)
-
-        return (result_delta_rho_delta_v.eval(), result_delta_rho_delta_u.eval())
-
-        
+    return (v_coefficients, u_coefficients)
