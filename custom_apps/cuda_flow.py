@@ -21,7 +21,7 @@ class CUDAFlow(App):
         #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:6, 0:6], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid_2()
         #fluid.density = self._get_density_grid()
@@ -41,7 +41,7 @@ class CUDAFlow(App):
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
         self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
 
-        print("---> ", self.fluid.density.data)
+        #print("---> ", self.fluid.density.data)
 
         world.step(dt=self.timestep)
         
@@ -133,8 +133,8 @@ class CUDAFlow(App):
 
                 #next.append([-0.2, 0.3])
                 
-                if(x < 3):
-                    next.append([0.0, -0.1])
+                if(y == 50):
+                    next.append([0.1, 0.1])
                 else:
                     next.append([0.0, 0.1])
                 #next.append[0.1, 0.0])

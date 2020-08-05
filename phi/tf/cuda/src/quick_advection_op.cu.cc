@@ -184,11 +184,18 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     }
     float delta_v_v_delta_y = v4 * v4 - v3 * v3;
     float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
-    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
+    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_v_delta_t * dt;
 }
 
 
 __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, int dim, int padding, float dt) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim + 1 || j >= dim) {
+        return;
+    }
+
     output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)];
 }
 
@@ -248,6 +255,7 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     float* d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
     advectVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out, d_u, d_v, DIM, PADDING, DT);
+    cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Cleanup
     cudaFree(d_u);
@@ -275,6 +283,7 @@ void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const
     float* d_out;
     cudaMalloc(&d_out, DIM * (DIM + 1) * sizeof(float));
     advectVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out, d_u, d_v, DIM, PADDING, DT);
+    cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Cleanup
     cudaFree(d_u);
