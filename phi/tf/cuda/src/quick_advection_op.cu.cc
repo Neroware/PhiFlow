@@ -88,22 +88,22 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
         cs_v[k] = coefficients(k, v1, v2);
     }
 
-    float d_u_rho_d_x = 
+    float delta_u_rho_delta_x = 
         cs_u[0] * rho[pidx(j, i - 2, dim, padding)] +
         cs_u[1] * rho[pidx(j, i - 1, dim, padding)] +
         cs_u[2] * rho[pidx(j, i, dim, padding)] +
         cs_u[3] * rho[pidx(j, i + 1, dim, padding)] +
         cs_u[4] * rho[pidx(j, i + 2, dim, padding)];
 
-    float d_v_rho_d_y =
+    float delta_v_rho_delta_y =
         cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
         cs_v[1] * rho[pidx(j - 1, i, dim, padding)] +
         cs_v[2] * rho[pidx(j, i, dim, padding)] +
         cs_v[3] * rho[pidx(j + 1, i, dim, padding)] +
         cs_v[4] * rho[pidx(j + 2, i, dim, padding)];
 
-    float d_rho_d_t = -d_u_rho_d_x - d_v_rho_d_y;
-    output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + d_rho_d_t * dt;
+    float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
+    output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
 }
 
 
@@ -124,7 +124,7 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     for (int k = 0; k < 5; k++) {
         cs_u[k] = coefficients(k, u1, u2);
     }
-    float d_u_v_d_x =
+    float delta_u_v_delta_x =
         cs_u[0] * v[pidx(j, i - 2, dim, padding)] +
         cs_u[1] * v[pidx(j, i - 1, dim, padding)] +
         cs_u[2] * v[pidx(j, i, dim, padding)] +
@@ -133,8 +133,8 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     
     // Unfortunatly there are not any coefficients for v since v advects itsself.
     float v1, v2;
-    lerped_v1 = 0.5f * (v[pidx(j - 1, i, dim, padding)] + v[pidx(j, i, dim, padding)]);
-    lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j + 1, i, dim, padding)]);
+    float lerped_v1 = 0.5f * (v[pidx(j - 1, i, dim, padding)] + v[pidx(j, i, dim, padding)]);
+    float lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j + 1, i, dim, padding)]);
     if (lerped_v1 >= 0.0f) {
         float v_L, v_C, v_R;
         v_C = v[pidx(j - 1, i, dim, padding)];
@@ -163,9 +163,9 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
         v_FR = v[pidx(j + 2, i, dim, padding)];
         v2 = 0.5f * (v_C + v_R) - 0.125f * (v_FR + v_C - 2.0f * v_R);
     }
-    float d_v_v_d_y = v2 * v2 - v1 * v1;
-    float d_v_d_t = -d_u_v_d_x - d_v_v_d_y;
-    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + d_v_d_t * dt;
+    float delta_v_v_delta_y = v2 * v2 - v1 * v1;
+    float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
+    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_v_delta_t * dt;
 }
 
 
@@ -180,11 +180,11 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
     float v1, v2;
     v1 = v[pidx(j, i, dim, padding)];
     v2 = v[pidx(j + 1, i, dim, padding)];
-    float cs_u[5];
+    float cs_v[5];
     for (int k = 0; k < 5; k++) {
         cs_v[k] = coefficients(k, v1, v2);
     }
-    float d_v_u_d_y =
+    float delta_v_u_delta_y =
         cs_v[0] * u[pidx(j - 2, i, dim + 1, padding)] +
         cs_v[1] * u[pidx(j - 1, i, dim + 1, padding)] +
         cs_v[2] * u[pidx(j, i, dim + 1, padding)] +
@@ -193,8 +193,8 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
 
     // Unfortunatly there are not any coefficients for u since u advects itsself.
     float u1, u2;
-    lerped_u1 = 0.5f * (u[pidx(j, i - 1, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
-    lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j, i + 1, dim + 1, padding)]);
+    float lerped_u1 = 0.5f * (u[pidx(j, i - 1, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
+    float lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j, i + 1, dim + 1, padding)]);
     if (lerped_u1 >= 0.0f) {
         float u_L, u_C, u_R;
         u_C = u[pidx(j, i - 1, dim + 1, padding)];
@@ -223,9 +223,9 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
         u_FR = u[pidx(j, i + 2, dim, padding)];
         u2 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
     }
-    float d_u_u_d_x = u2 * u2 - u1 * u1;
-    float d_u_d_t = -d_u_u_d_x - d_v_u_d_y;
-    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + d_v_d_t * dt;
+    float delta_u_u_delta_x = u2 * u2 - u1 * u1;
+    float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
+    output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_u_delta_t * dt;
 }
 
 
