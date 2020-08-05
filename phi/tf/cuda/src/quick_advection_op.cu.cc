@@ -108,7 +108,7 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
 }
 
 
-/* ======================================= New Vel Adv. =================================================== */
+/* ======================================= Velocity Advection =================================================== */
 
 __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
@@ -118,7 +118,7 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
         return;
     }
 
-    float lerped_u1 = 0.5f * (u[pidx(j - 1, i, dim + 1, padding)] + u[pidx(j - 1, i, dim + 1, padding)]);
+    float lerped_u1 = 0.5f * (u[pidx(j - 1, i, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
     float lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j + 1, i, dim + 1, padding)]);
     float v1, v2;
     if (lerped_u1 >= 0.0f) {
@@ -196,7 +196,73 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
         return;
     }
 
-    output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)];
+    float lerped_v1 = 0.5f * (v[pidx(j, i - 1, dim, padding)] + v[pidx(j, i, dim, padding)]);
+    float lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j, i + 1, dim, padding)]);
+    float u1, u2;
+    if (lerped_v1 >= 0.0f) {
+        float u_L, u_C, u_R;
+        u_C = u[pidx(j - 1, i, dim + 1, padding)];
+        u_L = u[pidx(j - 2, i, dim + 1, padding)];
+        u_R = u[pidx(j, i, dim + 1, padding)];
+        u1 = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_R = u[pidx(j, i, dim + 1, padding)];
+        u_FR = u[pidx(j + 1, i, dim + 1, padding)];
+        u_C = u[pidx(j - 1, i, dim + 1, padding)];
+        u1 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+    if (lerped_v2 >= 0.0f) {
+        float u_L, u_C, u_R;
+        u_C = u[pidx(j, i, dim + 1, padding)];
+        u_L = u[pidx(j - 1, i, dim + 1, padding)];
+        u_R = u[pidx(j + 1, i, dim + 1, padding)];
+        u2 = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_R = u[pidx(j + 1, i, dim + 1, padding)];
+        u_FR = u[pidx(j + 2, i, dim + 1, padding)];
+        u_C = u[pidx(j, i, dim + 1, padding)];
+        u2 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+    float delta_v_u_delta_y = lerped_v2 * u2 - lerped_v1 * u1;
+
+    float lerped_u3 = 0.5f * (u[pidx(j, i - 1, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
+    float lerped_u4 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j, i + 1, dim + 1, padding)]);
+    float u3, u4;
+    if (lerped_u3 > 0.0f) {
+        float u_L, u_C, u_R;
+        u_C = u[pidx(j, i - 1, dim + 1, padding)];
+        u_R = u[pidx(j, i, dim + 1, padding)];
+        u_L = u[pidx(j, i - 2, dim + 1, padding)];
+        u3 = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_C = u[pidx(j, i - 1, dim + 1, padding)];
+        u_R = u[pidx(j, i, dim + 1, padding)];
+        u_FR = u[pidx(j, i + 1, dim + 1, padding)];
+        u3 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+    if (lerped_u4 > 0.0f) {
+        float u_L, u_C, u_R;
+        u_C = u[pidx(j, i, dim + 1, padding)];
+        u_R = u[pidx(j, i + 1, dim + 1, padding)];
+        u_L = u[pidx(j, i - 1, dim + 1, padding)];
+        u4 = 0.5f * (u_C + u_R) - 0.125f * (u_L + u_R - 2.0f * u_C);
+    }
+    else {
+        float u_C, u_R, u_FR;
+        u_C = u[pidx(j, i, dim + 1, padding)];
+        u_R = u[pidx(j, i + 1, dim + 1, padding)];
+        u_FR = u[pidx(j, i + 2, dim + 1, padding)];
+        u4 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
+    }
+    float delta_u_u_delta_x = u4 * u4 - u3 * u3;
+    float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
+    output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)] + delta_u_delta_t * dt;
 }
 
 
