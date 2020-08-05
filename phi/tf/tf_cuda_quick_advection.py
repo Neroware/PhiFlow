@@ -70,10 +70,9 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
         with tf.compat.v1.Session(""):
             result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 1, 0).eval()
             result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 2, 0).eval()
-            return to_staggered_grid(velocity_u_field.data[0], result_vel_v[0], dimensions)
+            #return to_staggered_grid(velocity_u_field.data[0], result_vel_v[0], dimensions)
             #return to_staggered_grid(result_vel_u[0], velocity_v_field.data[0], dimensions)
-            
-            #return to_staggered_grid(result_vel_u[0], result_vel_v[0], dimensions)
+            return to_staggered_grid(result_vel_u[0], result_vel_v[0], dimensions)
 
     print("QUICK Advection: Field type invalid!")
     return []
