@@ -24,7 +24,6 @@ def to_staggered_grid(data_x, data_y, dim):
         for i in range(0, dim + 1):
             next.append([None, None])
         result_data.append(next)
-
     # X-Components (i+0.5,j)
     for j in range(0, dim):
         for i in range(0, dim + 1):
@@ -33,7 +32,6 @@ def to_staggered_grid(data_x, data_y, dim):
     for j in range(0, dim + 1):
         for i in range(0, dim):
             result_data[j][i][0] = data_y[j][i]
-
     return StaggeredGrid(np.array([result_data], dtype="float32"))
 
 
@@ -47,9 +45,7 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
     :param step_type:      explicit_euler (only euler supported)
     :return:               Advected field
     """
-
     if(field_type == "density"):
-        #print(":::::>", field.padded(2).data)
         density_tensor = tf.constant(field.data)
         density_tensor_padded = tf.constant(field.padded(2).data)
         velocity_v_field, velocity_u_field = velocity_field.data
@@ -59,7 +55,6 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
         with tf.compat.v1.Session("") as sess:
             result = quick_op.quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor, velocity_v_tensor, dimensions, 2, dt, 0, 0).eval()
             return result
-
     elif(field_type == "velocity"):
         velocity_v_field, velocity_u_field = velocity_field.data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
@@ -70,8 +65,6 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
         with tf.compat.v1.Session(""):
             result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 1, 0).eval()
             result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 2, 0).eval()
-            #return to_staggered_grid(velocity_u_field.data[0], result_vel_v[0], dimensions)
-            #return to_staggered_grid(result_vel_u[0], velocity_v_field.data[0], dimensions)
             return to_staggered_grid(result_vel_u[0], result_vel_v[0], dimensions)
 
     print("QUICK Advection: Field type invalid!")
@@ -89,40 +82,32 @@ def tf_cuda_calculate_coefficients_quick_advection(velocity_field, i, j, dt):
     """
     def coefficients(vel1, vel2):
         c1 = c2 = c3 = c4 = c5 = 0.0
-        
         if(vel1 >= 0 and vel2 >= 0):
             c1 = 0.125 * vel1
             c2 = -0.125 * vel2 - 0.75 * vel1
             c3 = 0.75 * vel2 - 0.375 * vel1
             c4 = 0.375 * vel2
-        
         elif(vel1 <= 0 and vel2 <= 0):
             c2 = -0.375 * vel1
             c3 = 0.375 * vel2 - 0.75 * vel1
             c4 = 0.75 * vel2 + 0.125 * vel1
             c5 = -0.125 * vel2
-
         elif(vel1 < 0 and vel2 > 0):
             c2 = -0.125 * vel2 - 0.375 * vel1
             c3 = 0.75 * vel2 - 0.75 * vel1 
             c4 = 0.375 * vel2 + 0.125 * vel1
-
         else:
             c1 = 0.125 * vel1
             c2 = -0.75 * vel1
             c3 = 0.375 * vel2 - 0.375 * vel1
             c4 = 0.75 * vel2
             c5 = -0.125 * vel1
-
         return (c1, c2, c3, c4, c5)
-
     velocity_v_field, velocity_u_field = velocity_field.data
     u1 = velocity_u_field.data[j][i]
     u2 = velocity_u_field.data[j][i + 1]
     v1 = velocity_v_field.data[j][i]
     v2 = velocity_v_field.data[j + 1][i]
-
     u_coefficients = coefficients(u1, u2)
     v_coefficients = coefficients(v1, v2)
-
     return (v_coefficients, u_coefficients)
