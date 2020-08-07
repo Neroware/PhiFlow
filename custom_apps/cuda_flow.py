@@ -6,7 +6,7 @@ MODE = 'TensorFlow'
 RESOLUTION = [int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
 DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
-from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
+from phi.tf.tf_cuda_quick_advection import *
 
 import math
 PI = 3.14159
@@ -21,7 +21,7 @@ class CUDAFlow(App):
         #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:6, 0:6], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid_2()
         #fluid.density = self._get_density_grid()
@@ -38,8 +38,12 @@ class CUDAFlow(App):
 
         #print(">>>>> ", self.fluid.velocity.data[0].data)
 
+        #grds = tf_quick_advection_density_gradients(density, velocity, dt)
+        grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
+        print("+++++++++++ Gradients: ", grds, "++++++++++")
+
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
-        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")
+        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")        
 
         #print("---> ", self.fluid.velocity.data[1].data)
 
@@ -81,11 +85,11 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0]):
             next = []
             for x in range(0, RESOLUTION[0]):
-                #if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
-                #    next.append([0.2])
-                #else:
-                #    next.append([0.0])
-                next.append([0.1])
+                if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+                    next.append([0.2])
+                else:
+                    next.append([0.0])
+                #next.append([0.1])
             data.append(next)
 
         density_array = np.array([data], dtype="float32")
@@ -133,11 +137,11 @@ class CUDAFlow(App):
 
                 #next.append([-0.2, 0.3])
                 
-                if(x == 3):
-                    next.append([0.0, -0.2])
-                else:
-                    next.append([0.0, -0.1])
-                #next.append[0.1, 0.0])
+                #if(x == 3):
+                #    next.append([0.0, -0.2])
+                #else:
+                #    next.append([0.0, -0.1])
+                next.append([0.0, 0.1])
 
                 #next.append([0.02 * (y - 50), 0.02 * (x - 50)])
 

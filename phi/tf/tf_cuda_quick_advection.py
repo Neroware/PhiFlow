@@ -66,12 +66,11 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
             result_vel_u = quick_op.quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 1, 0).eval()
             result_vel_v = quick_op.quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dimensions, 2, dt, 2, 0).eval()
             return to_staggered_grid(result_vel_u[0], result_vel_v[0], dimensions)
-
     print("QUICK Advection: Field type invalid!")
     return []
 
 
-def tf_cuda_calculate_coefficients_quick_advection(velocity_field, i, j, dt):
+def tf_quick_advection_coefficients(velocity_field, i, j, dt):
     """ 
     Returns the coefficients needed to calculate rho(t+1) at (i,j)
     :param velocity_field: Staggered Grid with velocity entries
@@ -111,3 +110,35 @@ def tf_cuda_calculate_coefficients_quick_advection(velocity_field, i, j, dt):
     u_coefficients = coefficients(u1, u2)
     v_coefficients = coefficients(v1, v2)
     return (v_coefficients, u_coefficients)
+
+
+def tf_quick_advection_density_gradients(density_field, velocity_field, dt):
+    dimensions = density_field.data.shape[1]
+    field_tensor = tf.constant(density_field.data)
+    rho0 = tf.constant(density_field.padded(2).data)
+    u = tf.constant(velocity_field.data[0].padded(2).data)
+    v = tf.constant(velocity_field.data[1].padded(2).data)
+    rho1 = quick_op.quick_advection(field_tensor, rho0, u, v, dimensions, 2, dt, 0, 0)
+    
+    delta_rho1_delta_rho0, delta_rho1_delta_u, delta_rho1_delta_v = tf.gradients(rho1, [rho0, u, v])
+    return (delta_rho1_delta_rho0, delta_rho1_delta_u, delta_rho1_delta_v)
+
+
+from phi.physics.field.advect import semi_lagrangian
+def tf_semi_lagrange_density_gradients(density_field, velocity_field, dt):
+    dimensions = density_field.data.shape[1]
+
+    def semi_lagrange_adv(rho0, u, v):
+        with tf.compat.v1.Session(""):
+            rho0_data = rho0.eval()
+            u_data = u.eval()
+            v_data = v.eval()
+            rho0_grid = CenteredGrid(rho0_data)
+            vel_grid = to_staggered_grid(u_data[0], v_data[0], dimensions)
+            return tf.constant(semi_lagrangian(rho0_grid, vel_grid, dt).data[0])
+
+    rho0 = tf.constant(density_field.padded(2).data)
+    v = tf.constant(velocity_field.data[0].padded(2).data)
+    u = tf.constant(velocity_field.data[1].padded(2).data)
+    rho1 = semi_lagrange_adv(rho0, u, v)
+    return tf.gradients(rho1, [rho0, u, v])
