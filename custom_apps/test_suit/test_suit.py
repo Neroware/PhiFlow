@@ -566,7 +566,7 @@ for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
         if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
-            next.append([-0.1, -0.1])
+            next.append([0.1, -0.1])
         else:
             next.append([0.0, 0.0])
     data.append(next)
