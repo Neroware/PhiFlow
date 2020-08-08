@@ -121,7 +121,13 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     float lerped_u1 = 0.5f * (u[pidx(j - 1, i, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
     float lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j + 1, i, dim + 1, padding)]);
     float v1, v2;
-    if (lerped_u1 >= 0.0f) {
+    if(lerped_u1 == 0.0f){
+        float v_C, v_R;
+        v_C = v[pidx(j, i - 1, dim, padding)];
+        v_R = v[pidx(j, i, dim, padding)];
+        v1 = 0.5f * (v_C + v_R);
+    }
+    else if (lerped_u1 > 0.0f) {
         float v_L, v_C, v_R;
         v_C = v[pidx(j, i - 1, dim, padding)];
         v_L = v[pidx(j, i - 2, dim, padding)];
@@ -135,7 +141,13 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
         v_C = v[pidx(j, i - 1, dim, padding)];
         v1 = 0.5f * (v_C + v_R) - 0.125f * (v_FR + v_C - 2.0f * v_R);
     }
-    if (lerped_u2 >= 0.0f) {
+    if(lerped_u2 == 0.0f){
+        float v_C, v_R;
+        v_C = v[pidx(j, i, dim, padding)];
+        v_R = v[pidx(j, i + 1, dim, padding)];
+        v2 = 0.5f * (v_C + v_R);
+    }
+    else if (lerped_u2 > 0.0f) {
         float v_L, v_C, v_R;
         v_C = v[pidx(j, i, dim, padding)];
         v_L = v[pidx(j, i - 1, dim, padding)];
@@ -154,7 +166,10 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     float lerped_v3 = 0.5f * (v[pidx(j - 1, i, dim, padding)] + v[pidx(j, i, dim, padding)]);
     float lerped_v4 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j + 1, i, dim, padding)]);
     float v3, v4;
-    if (lerped_v3 >= 0.0f) {
+    if(lerped_v3 == 0.0f){
+        v3 = 0.0f;
+    }
+    else if (lerped_v3 > 0.0f) {
         float v_L, v_C, v_R;
         v_C = v[pidx(j - 1, i, dim, padding)];
         v_R = v[pidx(j, i, dim, padding)];
@@ -168,7 +183,10 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
         v_FR = v[pidx(j + 1, i, dim, padding)];
         v3 = 0.5f * (v_C + v_R) - 0.125f * (v_FR + v_C - 2.0f * v_R);
     }
-    if (lerped_v4 >= 0.0f) {
+    if (lerped_v4 == 0.0f){
+        v4 = 0.0f;
+    }
+    else if (lerped_v4 > 0.0f) {
         float v_L, v_C, v_R;
         v_C = v[pidx(j, i, dim, padding)];
         v_R = v[pidx(j + 1, i, dim, padding)];
@@ -199,7 +217,13 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
     float lerped_v1 = 0.5f * (v[pidx(j, i - 1, dim, padding)] + v[pidx(j, i, dim, padding)]);
     float lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j, i + 1, dim, padding)]);
     float u1, u2;
-    if (lerped_v1 >= 0.0f) {
+    if(lerped_v1 == 0.0f){
+        float u_C, u_R;
+        u_C = u[pidx(j - 1, i, dim + 1, padding)];
+        u_R = u[pidx(j, i, dim + 1, padding)];
+        u1 = 0.5f * (u_C + u_R);
+    }
+    else if (lerped_v1 > 0.0f) {
         float u_L, u_C, u_R;
         u_C = u[pidx(j - 1, i, dim + 1, padding)];
         u_L = u[pidx(j - 2, i, dim + 1, padding)];
@@ -213,7 +237,13 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
         u_C = u[pidx(j - 1, i, dim + 1, padding)];
         u1 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
     }
-    if (lerped_v2 >= 0.0f) {
+    if(lerped_v2 == 0.0f){
+        float u_C, u_R;
+        u_C = u[pidx(j, i, dim + 1, padding)];
+        u_R = u[pidx(j + 1, i, dim + 1, padding)];
+        u2 = 0.5f * (u_C + u_R);
+    }
+    else if (lerped_v2 > 0.0f) {
         float u_L, u_C, u_R;
         u_C = u[pidx(j, i, dim + 1, padding)];
         u_L = u[pidx(j - 1, i, dim + 1, padding)];
@@ -232,7 +262,10 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
     float lerped_u3 = 0.5f * (u[pidx(j, i - 1, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
     float lerped_u4 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j, i + 1, dim + 1, padding)]);
     float u3, u4;
-    if (lerped_u3 >= 0.0f) {
+    if(lerped_u3 == 0.0f){
+        u3 = 0.0f;
+    }
+    else if (lerped_u3 > 0.0f) {
         float u_L, u_C, u_R;
         u_C = u[pidx(j, i - 1, dim + 1, padding)];
         u_R = u[pidx(j, i, dim + 1, padding)];
@@ -246,7 +279,10 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
         u_FR = u[pidx(j, i + 1, dim + 1, padding)];
         u3 = 0.5f * (u_C + u_R) - 0.125f * (u_FR + u_C - 2.0f * u_R);
     }
-    if (lerped_u4 >= 0.0f) {
+    if (lerped_u4 == 0.0f){
+        u4 = 0.0f;
+    }
+    else if (lerped_u4 > 0.0f) {
         float u_L, u_C, u_R;
         u_C = u[pidx(j, i, dim + 1, padding)];
         u_R = u[pidx(j, i + 1, dim + 1, padding)];

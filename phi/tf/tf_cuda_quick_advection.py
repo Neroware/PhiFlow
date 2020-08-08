@@ -6,7 +6,10 @@ from numbers import Number
 from . import tf
 from phi import math
 from phi.tf.flow import *
+
 from tensorflow.python.framework import ops
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import sparse_ops
 
 
 # --- Load Custom Ops ---
@@ -113,23 +116,24 @@ def tf_quick_advection_coefficients(velocity_field, i, j, dt):
     return (v_coefficients, u_coefficients)
 
 
-@ops.RegisterGradient("QuickAdvection")
-def _quick_advection_gradients(op, grad):
-    print("=============== ", grad)
-    return [None, None, None, None]
+#@ops.RegisterGradient("QuickAdvection")
+#def _tf_quick_advection_gradients(op, grad):
+#    result = [None, None, None, None]
+#    field = op.inputs[0]
+#    rho0 = op.inputs[1]
+#    u = op.inputs[2]
+#    v = op.inputs[3]
+#    return [field, rho0, u, v]
 
 
-
-def tf_quick_density_gradients(density_field, velocity_field, dt):
-    dimensions = density_field.data.shape[1]
-    field_tensor = tf.constant(density_field.data)
-    rho0 = tf.constant(density_field.padded(2).data)
-    u = tf.constant(velocity_field.data[0].padded(2).data)
-    v = tf.constant(velocity_field.data[1].padded(2).data)
-    rho1 = quick_op.quick_advection(field_tensor, rho0, u, v, dimensions, 2, dt, 0, 0)
-    return tf.gradients(rho1, [rho0, u, v])
-    #delta_rho1_delta_rho0, delta_rho1_delta_u, delta_rho1_delta_v = tf.gradients(rho1, [rho0, u, v])
-    #return (delta_rho1_delta_rho0, delta_rho1_delta_u, delta_rho1_delta_v)
+#def tf_quick_density_gradients(density_field, velocity_field, dt):
+#    dimensions = density_field.data.shape[1]
+#    field_tensor = tf.constant(density_field.data)
+#    rho0 = tf.constant(density_field.padded(2).data)
+#    u = tf.constant(velocity_field.data[0].padded(2).data)
+#    v = tf.constant(velocity_field.data[1].padded(2).data)
+#    rho1 = quick_op.quick_advection(field_tensor, rho0, u, v, dimensions, 2, dt, 0, 0)
+#    return tf.gradients(rho1, [field_tensor, rho0, u, v])
 
 
 #from phi.physics.field.advect import semi_lagrangian
