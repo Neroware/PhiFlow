@@ -262,7 +262,7 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
     }
     float delta_u_u_delta_x = u4 * u4 - u3 * u3;
     float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
-    output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)] + delta_u_delta_t * dt;
+    output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)] /*+ delta_u_delta_t * dt*/;
 }
 
 

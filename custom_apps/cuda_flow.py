@@ -38,8 +38,8 @@ class CUDAFlow(App):
 
         #print(">>>>> ", self.fluid.velocity.data[0].data)
 
-        #grds = tf_quick_advection_density_gradients(density, velocity, dt)
-        grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
+        grds = tf_quick_density_gradients(density, velocity, dt)
+        #grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
         print("+++++++++++ Gradients: ", grds, "++++++++++")
 
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")

@@ -436,7 +436,43 @@ else:
 TEST_CASES.append(case_7)
 
 
-### Case 8 ###
+### Case 8a ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        if x % 8 <= 3 and y % 8 <= 3:
+            next.append([0.1])
+        elif x % 8 > 3 and y % 8 <= 3:
+            next.append([0.2])
+        elif x % 8 <= 3 and y % 8 > 3:
+            next.append([0.2])
+        else:
+            next.append([0.1])
+    data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+            next.append([0.2, 0.1])
+        else:
+            next.append([0.1, 0.1])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_8a = TestCase("Vel_Y_Block", velocity_array, density_array, 0.1)
+else:
+    case_8a = TestCase("Vel_Y_Block", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_8a)
+
+
+### Case 8b ###
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
@@ -466,10 +502,83 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_8 = TestCase("Vel_Y_Block", velocity_array, density_array, 0.1)
+    case_8b = TestCase("Vel_Y_Block_2", velocity_array, density_array, 0.1)
 else:
-    case_8 = TestCase("Vel_Y_Block", velocity_field, density_field, 0.1)
-TEST_CASES.append(case_8)
+    case_8b = TestCase("Vel_Y_Block_2", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_8b)
+
+
+### Case 8c ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        if x % 8 <= 3 and y % 8 <= 3:
+            next.append([0.1])
+        elif x % 8 > 3 and y % 8 <= 3:
+            next.append([0.2])
+        elif x % 8 <= 3 and y % 8 > 3:
+            next.append([0.2])
+        else:
+            next.append([0.1])
+    data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+            next.append([-0.2, -0.1])
+        else:
+            next.append([-0.1, -0.1])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_8c = TestCase("Vel_Y_Block_3", velocity_array, density_array, 0.1)
+else:
+    case_8c = TestCase("Vel_Y_Block_3", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_8c)
+
+
+### Case 8d ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        if x % 8 <= 3 and y % 8 <= 3:
+            next.append([0.1])
+        elif x % 8 > 3 and y % 8 <= 3:
+            next.append([0.2])
+        elif x % 8 <= 3 and y % 8 > 3:
+            next.append([0.2])
+        else:
+            next.append([0.1])
+    data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
+
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+            next.append([-0.2, 0.1])
+        else:
+            next.append([-0.1, 0.1])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+
+if not semi_langrange_mode:
+    case_8d = TestCase("Vel_Y_Block_4", velocity_array, density_array, 0.1)
+else:
+    case_8d = TestCase("Vel_Y_Block_4", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_8d)
+
 
 
 ### Case 9 ###
