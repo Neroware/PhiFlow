@@ -142,6 +142,11 @@ def plot_grid_diff_y_mirror(data1, data2, res, filename):
         for i in range(0, res + 1):
             next.append([-0.4])
         diff.append(next)
+
+    for j in range(0, res):
+         for i in range(0, res + 1):
+             diff[j][i][0] = data1[j][i][0]
+
     plot_grid(diff, "diff", filename, -0.4, 0.4)
 
 
