@@ -145,7 +145,7 @@ def plot_grid_diff_y_mirror(data1, data2, res, filename):
 
     for j in range(0, res):
          for i in range(0, res + 1):
-             diff[j][i][0] = data2[res - j - 1][i][0]
+             diff[j][i][0] = data2[j][i][0]
 
     plot_grid(diff, "diff", filename, -0.4, 0.4)
 
@@ -217,7 +217,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+        if(x >= 40 and x <= 60 and y >= 40 and y <= 60):
             next.append([0.1, 0.2])
         else:
             next.append([0.1, 0.1])
@@ -253,7 +253,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        if(x >= 45 and x <= 55 and y >= 45 and y <= 55):
+        if(x >= 40 and x <= 60 and y >= 40 and y <= 60):
             next.append([-0.1, 0.2])
         else:
             next.append([-0.1, 0.1])
