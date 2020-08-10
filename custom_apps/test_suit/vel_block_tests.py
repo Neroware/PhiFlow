@@ -217,7 +217,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        if(x >= 40 and x <= 60 and y >= 40 and y <= 60):
+        if(x >= 40 and x <= 60 and y >= 40 and y < 60):
             next.append([0.1, 0.2])
         else:
             next.append([0.1, 0.1])
@@ -253,7 +253,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        if(x >= 40 and x <= 60 and y >= 40 and y <= 60):
+        if(x >= 40 and x <= 60 and y >= 40 and y < 60):
             next.append([-0.1, 0.2])
         else:
             next.append([-0.1, 0.1])
