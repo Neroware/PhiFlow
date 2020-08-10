@@ -135,19 +135,13 @@ def plot_grid(data, dirname, filename, min_value, max_value):
     plt.close()
     
 
-def plot_grid_diff_y_mirror(data1, data2, x_len, y_len, filename):
+def plot_grid_diff_y_mirror(data1, data2, res, filename):
     diff = []
-    for row in data1:
+    for j in range(0, res):
         next = []
-        for col in row:
-            next.append([col[0]])
+        for i in range(0, res + 1):
+            next.append([-0.4])
         diff.append(next)
-
-    for j in range(0, 100):
-        j_idx = 100 - j - 1
-        for i in range(0, 101):
-            diff[j][i][0] -= data2[j_idx][i][0]
-
     plot_grid(diff, "diff", filename, -0.4, 0.4)
 
 
@@ -168,7 +162,7 @@ def run_test_cases(test_cases):
     v2_init = case_2.get_velocity_y()
     u2_init = case_2.get_velocity_x()
     den2_init = case_2.get_density()
-    #plot_grid_diff_y_mirror(u1_init[0], u2_init[0], RESOLUTION[0] + 1, RESOLUTION[0] + 1, "diff_init.jpg")
+    #plot_grid_diff_y_mirror(u1_init[0], u2_init[0], RESOLUTION[0], "diff_init.jpg")
 
     case_1.step()
     case_2.step()
@@ -179,7 +173,7 @@ def run_test_cases(test_cases):
     v2_1 = case_2.get_velocity_y()
     u2_1 = case_2.get_velocity_x()
     den2_1 = case_2.get_density()
-    plot_grid_diff_y_mirror(u1_1[0], u2_1[0], RESOLUTION[0] + 1, RESOLUTION[0], "diff_1.jpg")
+    plot_grid_diff_y_mirror(u1_1[0], u2_1[0], RESOLUTION[0], "diff_1.jpg")
 
     for count in range(0, 6):
         for step in range(0, 50):
@@ -191,7 +185,7 @@ def run_test_cases(test_cases):
         v2 = case_2.get_velocity_y()
         u2 = case_2.get_velocity_x()
         den2 = case_2.get_density()
-        plot_grid_diff_y_mirror(u1[0], u2[0], RESOLUTION[0] + 1, RESOLUTION[0], "diff_" + str((count + 1) * 50) + ".jpg")
+        plot_grid_diff_y_mirror(u1[0], u2[0], RESOLUTION[0], "diff_" + str((count + 1) * 50) + ".jpg")
 
 
 TEST_CASES = []
