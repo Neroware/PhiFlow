@@ -143,9 +143,9 @@ def plot_grid_diff_y_mirror(data1, data2, x_len, y_len, filename):
             next.append([col[0]])
         diff.append(next)
 
-    for j in range(0, y_len):
-        j_idx = y_len - j - 1
-        for i in range(0, x_len):
+    for j in range(0, 100):
+        j_idx = 100 - j - 1
+        for i in range(0, 101):
             diff[j][i][0] -= data2[j_idx][i][0]
 
     plot_grid(diff, "diff", filename, -0.4, 0.4)
@@ -168,7 +168,7 @@ def run_test_cases(test_cases):
     v2_init = case_2.get_velocity_y()
     u2_init = case_2.get_velocity_x()
     den2_init = case_2.get_density()
-    plot_grid_diff_y_mirror(u1_init[0], u2_init[0], RESOLUTION[0] + 1, RESOLUTION[0] + 1, "diff_init.jpg")
+    #plot_grid_diff_y_mirror(u1_init[0], u2_init[0], RESOLUTION[0] + 1, RESOLUTION[0] + 1, "diff_init.jpg")
 
     case_1.step()
     case_2.step()
@@ -195,7 +195,6 @@ def run_test_cases(test_cases):
 
 
 TEST_CASES = []
-print(">>> ", RESOLUTION[0])
 
 
 ### Case 7a ###
