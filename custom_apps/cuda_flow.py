@@ -39,6 +39,7 @@ class CUDAFlow(App):
         #print("Input: ", self.fluid.velocity.data[0].data)
 
         grds_x, grds_y = tf_quick_density_gradients(density, velocity, 1, 1, dt)
+        print("Gradient: ", grds_x)
         #grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
         with tf.Session("") as sess:
             for grd in grds_y:

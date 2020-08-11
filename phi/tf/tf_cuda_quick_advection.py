@@ -76,40 +76,40 @@ def tf_cuda_quick_advection(velocity_field, dt, field=None, field_type="density"
 
 def _tf_get_quick_coefficients(vel1, vel2):
     def r_case0(): 
-        c1 = tf.constant(0.125 * vel1)
-        c2 = tf.constant(-0.125 * vel2 - 0.75 * vel1)
-        c3 = tf.constant(0.75 * vel2 - 0.375 * vel1)
-        c4 = tf.constant(0.375 * vel2)
+        c1 = 0.125 * vel1
+        c2 = -0.125 * vel2 - 0.75 * vel1
+        c3 = 0.75 * vel2 - 0.375 * vel1
+        c4 = 0.375 * vel2
         c5 = tf.constant(0.0)
         return (c1, c2, c3, c4, c5)
     def r_case1():
         c1 = tf.constant(0.0)
-        c2 = tf.constant(-0.375 * vel1)
-        c3 = tf.constant(0.375 * vel2 - 0.75 * vel1)
-        c4 = tf.constant(0.75 * vel2 + 0.125 * vel1)
-        c5 = tf.constant(-0.125 * vel2)
+        c2 = -0.375 * vel1
+        c3 = 0.375 * vel2 - 0.75 * vel1
+        c4 = 0.75 * vel2 + 0.125 * vel1
+        c5 = -0.125 * vel2
         return (c1, c2, c3, c4, c5)
     def r_case2(): 
         c1 = tf.constant(0.0)
-        c2 = tf.constant(-0.125 * vel2 - 0.375 * vel1)
-        c3 = tf.constant(0.75 * vel2 - 0.75 * vel1)
-        c4 = tf.constant(0.375 * vel2 + 0.125 * vel1)
+        c2 = -0.125 * vel2 - 0.375 * vel1
+        c3 = 0.75 * vel2 - 0.75 * vel1
+        c4 = 0.375 * vel2 + 0.125 * vel1
         c5 = tf.constant(0.0)
         return (c1, c2, c3, c4, c5)
     def r_case3(): 
-        c1 = tf.constant(0.125 * vel1)
-        c2 = tf.constant(-0.75 * vel1)
-        c3 = tf.constant(0.375 * vel2 - 0.375 * vel1)
-        c4 = tf.constant(0.75 * vel2)
-        c5 = tf.constant(-0.125 * vel1)
+        c1 = 0.125 * vel1
+        c2 = -0.75 * vel1
+        c3 = 0.375 * vel2 - 0.375 * vel1
+        c4 = 0.75 * vel2
+        c5 = -0.125 * vel1
         return (c1, c2, c3, c4, c5)
     def cond_1():
         return tf.logical_and(tf.greater_equal(vel1, 0.0), tf.greater_equal(vel2, 0.0))
     def cond_2():
-        return tf.logical_and(tf.lower_equal(vel1, 0.0), tf.lower_equal(vel2, 0.0))
+        return tf.logical_and(tf.less_equal(vel1, 0.0), tf.less_equal(vel2, 0.0))
     def cond_3():
-        return tf.logical_and(tf.lower(vel1, 0.0), tf.greater(vel2, 0.0))
-    return tf.cond(cond_1(), r_case0, tf.cond(cond_2(), r_case1, tf.cond(cond_3(), r_case2, r_case3))
+        return tf.logical_and(tf.less(vel1, 0.0), tf.greater(vel2, 0.0))
+    return tf.cond(cond_1(), r_case0, lambda: tf.cond(cond_2(), r_case1, lambda: tf.cond(cond_3(), r_case2, r_case3)))
 
 
 #def _get_quick_coefficients(vel1, vel2):
@@ -166,8 +166,8 @@ def tf_quick_density_gradients(density_field, velocity_field, i, j, dt):
     v1 = tf.constant(vel_v.data[0][j][i][0])
     v2 = tf.constant(vel_v.data[0][j + 1][i][0])
 
-    v_c1, v_c2, v_c3, v_c4, v_c5 = _get_quick_coefficients(v1, v2)
-    u_c1, u_c2, u_c3, u_c4, u_c5 = _get_quick_coefficients(u1, u2)
+    v_c1, v_c2, v_c3, v_c4, v_c5 = _tf_get_quick_coefficients(v1, v2)
+    u_c1, u_c2, u_c3, u_c4, u_c5 = _tf_get_quick_coefficients(u1, u2)
 
     rho_x = []
     rho_y = []
@@ -178,7 +178,7 @@ def tf_quick_density_gradients(density_field, velocity_field, i, j, dt):
     next_rho_x = rho_x[2] + (u_c1 * rho_x[0] + u_c2 * rho_x[1] + u_c3 * rho_x[2] + u_c4 * rho_x[3] + u_c5 * rho_x[4]) * dt
     next_rho_y = rho_y[2] + (v_c1 * rho_y[0] + v_c2 * rho_y[1] + v_c3 * rho_y[2] + v_c4 * rho_y[3] + v_c5 * rho_y[4]) * dt
 
-    return tf.gradients(next_rho_x, [u1, u2, v1, v2]), tf.gradients(next_rho_y, [u1, u2, v1, v2])
+    return tf.gradients(next_rho_x, [u1, u2]), tf.gradients(next_rho_y, [v1, v2])
 
 
 #from phi.physics.field.advect import semi_lagrangian
