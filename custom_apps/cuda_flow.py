@@ -19,9 +19,9 @@ class CUDAFlow(App):
 
         self.physics = SimpleFlowPhysics()
         #self.physics = SemiLangFlowPhysics()
-        self.timestep = 1.0
+        self.timestep = 0.1
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:6, 0:6], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid_2()
         #fluid.density = self._get_density_grid()
@@ -36,19 +36,19 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
 
-        print(">>>>> ", self.fluid.velocity.data[0].data)
+        #print("Input: ", self.fluid.velocity.data[0].data)
 
-        #grds = tf_quick_density_gradients(density, velocity, dt)
+        grds_x, grds_y = tf_quick_density_gradients(density, velocity, 1, 1, dt)
         #grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
-        #print("+++++++++++ Gradients: ", grds, "++++++++++")
-        #with tf.Session("") as sess:
-        #    for grd in grds:
-        #        print(">>>", grd.eval())
+        with tf.Session("") as sess:
+            for grd in grds_y:
+                print(">>> Grd.: ", grd.eval())
+            sess.close()
 
         self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
         self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")        
 
-        print("---> ", self.fluid.velocity.data[0].data)
+        #print("Output ", self.fluid.velocity.data[0].data)
 
         world.step(dt=self.timestep)
         
@@ -140,7 +140,7 @@ class CUDAFlow(App):
 
                 #next.append([-0.2, 0.3])
                 
-                if(x == 3):
+                if(x == 50):
                     next.append([-0.2, 0.1])
                 else:
                     next.append([0.0, 0.1])

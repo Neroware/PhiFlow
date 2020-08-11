@@ -107,10 +107,10 @@ def tf_quick_advection_coefficients(velocity_field, i, j, dt):
             c5 = -0.125 * vel1
         return (c1, c2, c3, c4, c5)
     velocity_v_field, velocity_u_field = velocity_field.data
-    u1 = velocity_u_field.data[j][i]
-    u2 = velocity_u_field.data[j][i + 1]
-    v1 = velocity_v_field.data[j][i]
-    v2 = velocity_v_field.data[j + 1][i]
+    u1 = velocity_u_field.data[0][j][i][0]
+    u2 = velocity_u_field.data[0][j][i + 1][0]
+    v1 = velocity_v_field.data[0][j][i][0]
+    v2 = velocity_v_field.data[0][j + 1][i][0]
     u_coefficients = coefficients(u1, u2)
     v_coefficients = coefficients(v1, v2)
     return (v_coefficients, u_coefficients)
@@ -126,14 +126,28 @@ def tf_quick_advection_coefficients(velocity_field, i, j, dt):
 #    return [field, rho0, u, v]
 
 
-#def tf_quick_density_gradients(density_field, velocity_field, dt):
-#    dimensions = density_field.data.shape[1]
-#    field_tensor = tf.constant(density_field.data)
-#    rho0 = tf.constant(density_field.padded(2).data)
-#    u = tf.constant(velocity_field.data[0].padded(2).data)
-#    v = tf.constant(velocity_field.data[1].padded(2).data)
-#    rho1 = quick_op.quick_advection(field_tensor, rho0, u, v, dimensions, 2, dt, 0, 0)
-#    return tf.gradients(rho1, [field_tensor, rho0, u, v])
+def tf_quick_density_gradients(density_field, velocity_field, i, j, dt):
+    #a = tf.constant(0.)
+    #b = tf.constant(0.)
+    #n = 0.125
+    #return tf.gradients(n * a + b, [a, b])
+
+    density = density_field.padded(2).data[0]
+    velocity = velocity_field.padded(2)
+    v_coefficients, u_coefficients = tf_quick_advection_coefficients(velocity, i + 2, j + 2, dt)
+    v_c1, v_c2, v_c3, v_c4, v_c5 = v_coefficients
+    u_c1, u_c2, u_c3, u_c4, u_c5 = u_coefficients
+
+    rho_x = []
+    rho_y = []
+    for offset in range(0, 5):
+        rho_x.append(tf.constant(density[j + 2][i + offset][0]))
+        rho_y.append(tf.constant(density[j + offset][i + 2][0]))
+    
+    next_rho_x = rho_x[2] + (u_c1 * rho_x[0] + u_c2 * rho_x[1] + u_c3 * rho_x[2] + u_c4 * rho_x[3] + u_c5 * rho_x[4]) * dt
+    next_rho_y = rho_y[2] + (v_c1 * rho_y[0] + v_c2 * rho_y[1] + v_c3 * rho_y[2] + v_c4 * rho_y[3] + v_c5 * rho_y[4]) * dt
+
+    return tf.gradients(next_rho_x, rho_x), tf.gradients(next_rho_y, rho_y)
 
 
 #from phi.physics.field.advect import semi_lagrangian
