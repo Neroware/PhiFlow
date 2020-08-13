@@ -64,9 +64,9 @@ class CUDAFlow(App):
         #    sess.close()
 
         # This is ugly but I but since this is siumlation code it's not too bad
-        density_tensor = tf.constant(field.data)
-        density_tensor_padded = tf.constant(field.padded(2).data)
-        velocity_v_field, velocity_u_field = velocity_field.data
+        density_tensor = tf.constant(density.data)
+        density_tensor_padded = tf.constant(density.padded(2).data)
+        velocity_v_field, velocity_u_field = velocity.data
         velocity_v_tensor = tf.constant(velocity_v_field.data)
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
@@ -78,7 +78,7 @@ class CUDAFlow(App):
 
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
-            self.fluid.velocity = to_staggered_grid(vel_u.data, vel_v.data, dim)
+            self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
             sess.close()
 
         world.step(dt=self.timestep)
