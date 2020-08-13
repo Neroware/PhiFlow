@@ -13,6 +13,24 @@ import math
 PI = 3.14159
 
 
+def to_staggered_grid(data_x, data_y, dim):
+    result_data = []
+    for j in range(0, dim + 1):
+        next = []
+        for i in range(0, dim + 1):
+            next.append([None, None])
+        result_data.append(next)
+    # X-Components (i+0.5,j)
+    for j in range(0, dim):
+        for i in range(0, dim + 1):
+            result_data[j][i][1] = data_x[j][i]
+    # Y-Components (i,j+0.5)
+    for j in range(0, dim + 1):
+        for i in range(0, dim):
+            result_data[j][i][0] = data_y[j][i]
+    return StaggeredGrid(np.array([result_data], dtype="float32"))
+
+
 class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
@@ -25,6 +43,7 @@ class CUDAFlow(App):
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid_2()
         #fluid.density = self._get_density_grid()
+        #world.add(ConstantVelocity(box[0:100, 0:100], velocity=(1, 0)))
 
         self.add_field('Velocity', lambda: fluid.velocity)
         self.add_field('Density', lambda: fluid.density)
@@ -34,6 +53,7 @@ class CUDAFlow(App):
         velocity = self.fluid.velocity
         density = self.fluid.density
         dt = self.timestep
+        dim = RESOLUTION[0]
 
         #grds_x, grds_y = tf_quick_density_gradients(density, velocity, 1, 1, dt)
         #print("Gradient: ", grds_x)
@@ -43,13 +63,26 @@ class CUDAFlow(App):
         #        print(">>> Grd.: ", grd.eval())
         #    sess.close()
 
-        self.fluid.density = tf_cuda_quick_advection(velocity, dt, field=density, field_type="density")
-        self.fluid.velocity = tf_cuda_quick_advection(velocity, dt, field_type="velocity")        
+        # This is ugly but I but since this is siumlation code it's not too bad
+        density_tensor = tf.constant(field.data)
+        density_tensor_padded = tf.constant(field.padded(2).data)
+        velocity_v_field, velocity_u_field = velocity_field.data
+        velocity_v_tensor = tf.constant(velocity_v_field.data)
+        velocity_u_tensor = tf.constant(velocity_u_field.data)
+        velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
+        velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
-        #print("Output ", self.fluid.velocity.data[0].data)
+        den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
+        vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
+        vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
+
+        with tf.Session("") as sess:
+            self.fluid.density = CenteredGrid(den.eval())
+            self.fluid.velocity = to_staggered_grid(vel_u.data, vel_v.data, dim)
+            sess.close()
 
         world.step(dt=self.timestep)
-
+        
 
     def action_reset(self):
         self.steps = 0
@@ -74,7 +107,7 @@ class CUDAFlow(App):
                     next.append([0.5])
             data.append(next)
 
-        density_array = tf.constant([data], dtype="float32")
+        density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
 
 
@@ -93,7 +126,7 @@ class CUDAFlow(App):
                 next.append([0.1])
             data.append(next)
 
-        density_array = tf.constant([data], dtype="float32")
+        density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
 
 
@@ -118,7 +151,7 @@ class CUDAFlow(App):
                 next.append([0.1 * m])
             data.append(next)
 
-        density_array = tf.constant([data], dtype="float32")
+        density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
 
 
@@ -166,7 +199,7 @@ class CUDAFlow(App):
                 #    next.append([vy, vx])
             data.append(next)
 
-        velocity_grid = tf.constant([data], dtype="float32")
+        velocity_grid = np.array([data], dtype="float32")
         return StaggeredGrid(velocity_grid)
 
 

@@ -137,48 +137,29 @@ def _tf_get_quick_coefficients(vel1, vel2):
 #    return (c1, c2, c3, c4, c5)
 
 
-def tf_quick_advection_coefficients(velocity_field, i, j, dt):
-    """ 
-    Returns the coefficients needed to calculate rho(t+1) at (i,j)
-    :param velocity_field: Staggered Grid with velocity entries
-    :param i:              Density Cell X-coordinate
-    :param j:              Density Cell Y-coordinate
-    :param dt:             Timestep
-    :return:               v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j)
-    """
-    velocity_v_field, velocity_u_field = velocity_field.data
-    u1 = tf.constant(velocity_u_field.data[0][j][i][0])
-    u2 = tf.constant(velocity_u_field.data[0][j][i + 1][0])
-    v1 = tf.constant(velocity_v_field.data[0][j][i][0])
-    v2 = tf.constant(velocity_v_field.data[0][j + 1][i][0])
-    u_coefficients = _tf_get_quick_coefficients(u1, u2)
-    v_coefficients = _tf_get_quick_coefficients(v1, v2)
-    return (v_coefficients, u_coefficients)
-
-
-def tf_quick_density_gradients(density_field, velocity_field, i, j, dt):
-    density = density_field.padded(2).data[0]
-    velocity = velocity_field.padded(2)
-    vel_v, vel_u = velocity.data
-
-    u1 = tf.constant(vel_u.data[0][j][i][0])
-    u2 = tf.constant(vel_u.data[0][j][i + 1][0])
-    v1 = tf.constant(vel_v.data[0][j][i][0])
-    v2 = tf.constant(vel_v.data[0][j + 1][i][0])
-
-    v_c1, v_c2, v_c3, v_c4, v_c5 = _tf_get_quick_coefficients(v1, v2)
-    u_c1, u_c2, u_c3, u_c4, u_c5 = _tf_get_quick_coefficients(u1, u2)
-
-    rho_x = []
-    rho_y = []
-    for offset in range(0, 5):
-        rho_x.append(tf.constant(density[j + 2][i + offset][0]))
-        rho_y.append(tf.constant(density[j + offset][i + 2][0]))
-
-    next_rho_x = rho_x[2] + (u_c1 * rho_x[0] + u_c2 * rho_x[1] + u_c3 * rho_x[2] + u_c4 * rho_x[3] + u_c5 * rho_x[4]) * dt
-    next_rho_y = rho_y[2] + (v_c1 * rho_y[0] + v_c2 * rho_y[1] + v_c3 * rho_y[2] + v_c4 * rho_y[3] + v_c5 * rho_y[4]) * dt
-
-    return tf.gradients(next_rho_x, [u1, u2]), tf.gradients(next_rho_y, [v1, v2])
+#def tf_quick_density_gradients(density_field, velocity_field, i, j, dt):
+#    density = density_field.padded(2).data[0]
+#    velocity = velocity_field.padded(2)
+#    vel_v, vel_u = velocity.data
+#
+#    u1 = tf.constant(vel_u.data[0][j][i][0])
+#    u2 = tf.constant(vel_u.data[0][j][i + 1][0])
+#    v1 = tf.constant(vel_v.data[0][j][i][0])
+#    v2 = tf.constant(vel_v.data[0][j + 1][i][0])
+#
+#    v_c1, v_c2, v_c3, v_c4, v_c5 = _tf_get_quick_coefficients(v1, v2)
+#    u_c1, u_c2, u_c3, u_c4, u_c5 = _tf_get_quick_coefficients(u1, u2)
+#
+#    rho_x = []
+#    rho_y = []
+#    for offset in range(0, 5):
+#        rho_x.append(tf.constant(density[j + 2][i + offset][0]))
+#        rho_y.append(tf.constant(density[j + offset][i + 2][0]))
+#
+#    next_rho_x = rho_x[2] + (u_c1 * rho_x[0] + u_c2 * rho_x[1] + u_c3 * rho_x[2] + u_c4 * rho_x[3] + u_c5 * rho_x[4]) * dt
+#    next_rho_y = rho_y[2] + (v_c1 * rho_y[0] + v_c2 * rho_y[1] + v_c3 * rho_y[2] + v_c4 * rho_y[3] + v_c5 * rho_y[4]) * dt
+#
+#    return tf.gradients(next_rho_x, [u1, u2]), tf.gradients(next_rho_y, [v1, v2])
 
 
 #from phi.physics.field.advect import semi_lagrangian
