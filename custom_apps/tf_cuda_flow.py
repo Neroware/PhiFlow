@@ -72,6 +72,14 @@ class CUDAFlow(App):
         velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
+        # Compute Gradients
+        grds = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
+        print("Gradient: ", grds)
+        with tf.Session("") as sess:
+            for grd in grds:
+                print(">>> Grd.: ", grd.eval())
+            sess.close()
+
         den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
         vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")

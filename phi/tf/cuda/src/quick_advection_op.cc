@@ -23,7 +23,7 @@ REGISTER_OP("QuickAdvection")
     });
 
 
-void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v);
+void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v, int axis_mode);
 void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
 void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
 
@@ -62,7 +62,11 @@ public:
         auto v = input_vel_v.flat<float>();
 
         switch(field_type){
-            case 0: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data());
+            case -2: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), -1);
+                break;
+            case -1: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), 1);
+                break;
+            case 0: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), 0);
                 break;
             case 1: LaunchQuickVelocityXKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data()); 
                 break;

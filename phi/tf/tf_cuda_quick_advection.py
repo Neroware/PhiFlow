@@ -44,6 +44,39 @@ def tf_cuda_quick_advection(field, field_padded, vel_u, vel_v, dt, dim, field_ty
     return None
 
 
+@ops.RegisterGradient("QuickAdvection")
+def _tf_cuda_quick_advection_grad(op, grad): 
+    field = op.inputs[0]
+    rho = op.inputs[1]
+    u = op.inputs[2]
+    v = op.inputs[3]
+    
+    paddings = tf.constant([[0, 0], [2, 2], [2, 2], [0, 0]])
+    grad_padded = tf.pad(grad, paddings)
+    grad_x = quick_op.quick_advection(field, rho, u, v, 100, 2, 1.0, -1, 0)
+    grad_y = quick_op.quick_advection(field, rho, u, v, 100, 2, 1.0, -2, 0)
+    # Reverse Euler timestep made by OP
+    grad_x = (grad_x - grad)
+    grad_y = (grad_y - grad)
+
+    # Resample here.... TODO
+    x_pad = tf.constant([[0, 0], [2, 2], [3, 2], [0, 0]])
+    y_pad = tf.constant([[0, 0], [3, 2], [2, 2], [0, 0]])
+    grad_x = tf.pad(grad_x, x_pad)
+    grad_y = tf.pad(grad_y, y_pad)
+
+    #paddings = tf.constant([[0, 0], [2, 2], [2, 2], [0, 0]])
+    #grad_padded = tf.pad(grad, paddings, "CONSTANT")
+    #res = quick_op.quick_advection(grad, grad_padded, u, v, 100, 2, 0.1, 0, 0)
+    return [None, None, grad_x, grad_y]
+
+
+def tf_cuda_quick_density_gradients(density, density_padded, vel_u, vel_v, dt, dim):
+    rho_adv = quick_op.quick_advection(density, density_padded, vel_u, vel_v, dim, 2, dt, 0, 0)
+    return tf.gradients(rho_adv, [vel_u, vel_v])
+
+
+
 #def _tf_get_quick_coefficients(vel1, vel2):
 #    def r_case0(): 
 #        c1 = 0.125 * vel1

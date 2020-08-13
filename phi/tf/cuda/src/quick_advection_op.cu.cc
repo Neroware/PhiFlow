@@ -65,7 +65,7 @@ __device__ float coefficients(int idx, float vel1, float vel2) {
 
 /* =========================================== Density Advection =====================================*/
 
-__global__ void advectDensityQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectDensityQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt, int axis_mode) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -73,35 +73,42 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
         return;
     }
 
-    float u1, u2;
-    u1 = u[pidx(j, i, dim + 1, padding)];
-    u2 = u[pidx(j, i + 1, dim + 1, padding)];
-    float cs_u[5];
-    for (int k = 0; k < 5; k++) {
-        cs_u[k] = coefficients(k, u1, u2);
+    float delta_u_rho_delta_x, delta_v_rho_delta_y;
+    delta_u_rho_delta_x = delta_v_rho_delta_y = 0.0f;
+
+    if(axis_mode != -1){
+        float u1, u2;
+        u1 = u[pidx(j, i, dim + 1, padding)];
+        u2 = u[pidx(j, i + 1, dim + 1, padding)];
+        float cs_u[5];
+        for (int k = 0; k < 5; k++) {
+            cs_u[k] = coefficients(k, u1, u2);
+        }
+
+        delta_u_rho_delta_x =
+            cs_u[0] * rho[pidx(j, i - 2, dim, padding)] +
+            cs_u[1] * rho[pidx(j, i - 1, dim, padding)] +
+            cs_u[2] * rho[pidx(j, i, dim, padding)] +
+            cs_u[3] * rho[pidx(j, i + 1, dim, padding)] +
+            cs_u[4] * rho[pidx(j, i + 2, dim, padding)];
     }
 
-    float v1, v2;
-    v1 = v[pidx(j, i, dim, padding)];
-    v2 = v[pidx(j + 1, i, dim, padding)];
-    float cs_v[5];
-    for (int k = 0; k < 5; k++) {
-        cs_v[k] = coefficients(k, v1, v2);
+    if(axis_mode != 1){
+        float v1, v2;
+        v1 = v[pidx(j, i, dim, padding)];
+        v2 = v[pidx(j + 1, i, dim, padding)];
+        float cs_v[5];
+        for (int k = 0; k < 5; k++) {
+            cs_v[k] = coefficients(k, v1, v2);
+        }
+
+        float delta_v_rho_delta_y =
+            cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
+            cs_v[1] * rho[pidx(j - 1, i, dim, padding)] +
+            cs_v[2] * rho[pidx(j, i, dim, padding)] +
+            cs_v[3] * rho[pidx(j + 1, i, dim, padding)] +
+            cs_v[4] * rho[pidx(j + 2, i, dim, padding)];
     }
-
-    float delta_u_rho_delta_x = 
-        cs_u[0] * rho[pidx(j, i - 2, dim, padding)] +
-        cs_u[1] * rho[pidx(j, i - 1, dim, padding)] +
-        cs_u[2] * rho[pidx(j, i, dim, padding)] +
-        cs_u[3] * rho[pidx(j, i + 1, dim, padding)] +
-        cs_u[4] * rho[pidx(j, i + 2, dim, padding)];
-
-    float delta_v_rho_delta_y =
-        cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
-        cs_v[1] * rho[pidx(j - 1, i, dim, padding)] +
-        cs_v[2] * rho[pidx(j, i, dim, padding)] +
-        cs_v[3] * rho[pidx(j + 1, i, dim, padding)] +
-        cs_v[4] * rho[pidx(j + 2, i, dim, padding)];
 
     float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
     output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
@@ -292,7 +299,7 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
 
 /* ====================================================== Kernels =============================================*/
 
-void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v) {
+void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v, int axis_mode) {
     const int DIM = dimensions;
     const int PADDING = padding;
     const float DT = timestep;
@@ -315,7 +322,7 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     cudaMalloc(&d_out, DIM * DIM * sizeof(float));
 
     // Advect the field
-    advectDensityQuick CUDA_CALL(GRID, BLOCK) (d_out, d_rho, d_u, d_v, DIM, PADDING, DT);
+    advectDensityQuick CUDA_CALL(GRID, BLOCK) (d_out, d_rho, d_u, d_v, DIM, PADDING, DT, axis_mode);
     cudaMemcpy(output_field, d_out, DIM * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Cleanup
