@@ -244,6 +244,40 @@ class CudaCommand(distutils.cmd.Command):
             + ['-L/usr/local/cuda/lib64/','-lcudart']
         )
 
+        # Build the QUICK Advection Gradient CUDA Kernels
+        subprocess.check_call(
+            [
+                self.nvcc,
+                '-std=c++11',
+                '-c',
+                '-o',
+                os.path.join(build_path, 'quick_advection_op_gradient.cu.o'),
+                os.path.join(src_path, 'quick_advection_op_gradient.cu.cc'),
+                '-x',
+                'cu',
+                '-Xcompiler',
+                '-fPIC'
+            ]
+            + tf_cflags
+        )
+
+        # Build the QUICK Advection Gradients Custom Op
+        subprocess.check_call(
+            [
+                self.gcc_4_8,
+                '-std=c++11',
+                '-shared',
+                '-o',
+                os.path.join(build_path, 'quick_advection_op_gradient.so'),
+                os.path.join(src_path, 'quick_advection_op_gradient.cc'),
+                os.path.join(build_path, 'quick_advection_op_gradient.cu.o'),
+                '-fPIC'
+            ]
+            + tf_cflags
+            + tf_lflags
+            + ['-L/usr/local/cuda/lib64/','-lcudart']
+        )
+
 
     def initialize_options(self):
         self.gcc = 'gcc'
