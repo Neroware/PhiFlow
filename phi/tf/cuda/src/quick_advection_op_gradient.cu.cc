@@ -99,7 +99,7 @@ __device__ float coefficients_derivative(int idx, float vel1, float vel2) {
 }
 
 
-__global__ void gradientFieldQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void gradientFieldQuick(float* output_field, float* rho, float* u, float* v, float* loss, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -123,11 +123,11 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
         cs_v[k] = coefficients(k, v1, v2);
     }
 
-    output_field[pidx(j, i, dim, padding)] = dt * -(cs_u[0] + cs_u[1] + cs_u[2] + cs_u[3] + cs_u[4]) - (cs_v[0] + cs_v[1] + cs_v[2] + cs_v[3] + cs_v[4]);
+    output_field[pidx(j, i, dim, padding)] = dt * -(cs_u[0] + cs_u[1] + cs_u[2] + cs_u[3] + cs_u[4]) - (cs_v[0] + cs_v[1] + cs_v[2] + cs_v[3] + cs_v[4]) * loss[IDX(j, i, dim)];
 }
 
 
-__global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u, float* v, float* loss, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -143,17 +143,23 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
         cs_u[k] = coefficients_derivative(k, u1, u2);
     }
     
+    float loss_grad;
+    if(i >= dim){
+        loss_grad = loss[IDX(j, i - 1, dim)];
+    }
+    loss_grad = loss[IDX(j, i, dim)];
+
     output_field[pidx(j, i, dim + 1, padding)] = dt * -(
         cs_u[0] * rho[pidx(j, i - 2, dim, padding)] + 
         cs_u[1] * rho[pidx(j, i - 1, dim, padding)] +
         cs_u[2] * rho[pidx(j, i, dim, padding)] + 
         cs_u[3] * rho[pidx(j, i + 1, dim, padding)] +
         cs_u[4] * rho[pidx(j, i + 2, dim, padding)]
-   );
+   ) * loss_grad;
 }
 
 
-__global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u, float* v, float* loss, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -169,17 +175,23 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
         cs_v[k] = coefficients_derivative(k, v1, v2);
     }
 
+    float loss_grad;
+    if(j >= dim){
+        loss_grad = loss[IDX(j - 1, i, dim)];
+    }
+    loss_grad = loss[IDX(j, i, dim)];
+
     output_field[pidx(j, i, dim, padding)] = dt * -(
         cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
         cs_v[1] * rho[pidx(j - 1, i, dim, padding)] +
         cs_v[2] * rho[pidx(j, i, dim, padding)] +
         cs_v[3] * rho[pidx(j + 1, i, dim, padding)] +
         cs_v[4] * rho[pidx(j + 2, i, dim, padding)]
-    );
+    ) * loss_grad;
 }
 
 
-void LaunchQUICKAdvectionScalarGradientKernel(float* output_grds, float* vel_u_grds, float* vel_v_grds, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v){
+void LaunchQUICKAdvectionScalarGradientKernel(float* output_grds, float* vel_u_grds, float* vel_v_grds, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v, const float* loss){
     const int DIM = dimensions;
     const int PADDING = padding;
     const float DT = timestep;
@@ -189,13 +201,15 @@ void LaunchQUICKAdvectionScalarGradientKernel(float* output_grds, float* vel_u_g
     const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
 
     // Setup Device Pointers for u, v and rho
-    float *d_rho, *d_u, *d_v;
+    float *d_rho, *d_u, *d_v, *d_loss;
     cudaMalloc(&d_rho, (DIM + 2 * PADDING) * (DIM + 2 * PADDING) * sizeof(float));
     cudaMalloc(&d_u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float));
     cudaMalloc(&d_v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float));
+    cudaMalloc(&d_loss, DIM * DIM * sizeof(float));
     cudaMemcpy(d_rho, rho, (DIM + 2 * PADDING) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_u, u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_loss, loss, DIM * DIM * sizeof(float), cudaMemcpyHostToDevice);
 
     // Setup output pointer
     float *d_out_field, *d_out_u, *d_out_v;
@@ -203,18 +217,19 @@ void LaunchQUICKAdvectionScalarGradientKernel(float* output_grds, float* vel_u_g
     cudaMalloc(&d_out_u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float));
     cudaMalloc(&d_out_v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float));
 
-    gradientFieldQuick CUDA_CALL(GRID, BLOCK) (d_out_field, d_rho, d_u, d_v, DIM, PADDING, DT);
+    gradientFieldQuick CUDA_CALL(GRID, BLOCK) (d_out_field, d_rho, d_u, d_v, d_loss, DIM, PADDING, DT);
     cudaMemcpy(output_grds, d_out_field, (DIM + 2 * PADDING) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyDeviceToHost);
 
-    gradientVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out_u, d_rho, d_u, d_v, DIM, PADDING, DT);
+    gradientVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out_u, d_rho, d_u, d_v, d_loss, DIM, PADDING, DT);
     cudaMemcpy(vel_u_grds, d_out_u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyDeviceToHost);
 
-    gradientVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out_v, d_rho, d_u, d_v, DIM, PADDING, DT);
+    gradientVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out_v, d_rho, d_u, d_v, d_loss, DIM, PADDING, DT);
     cudaMemcpy(vel_v_grds, d_out_v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyDeviceToHost);
 
     cudaFree(d_rho);
     cudaFree(d_u);
     cudaFree(d_v);
+    cudaFree(d_loss);
     cudaFree(d_out_field);
     cudaFree(d_out_u);
     cudaFree(d_out_v);

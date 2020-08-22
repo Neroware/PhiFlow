@@ -58,7 +58,7 @@ def _tf_cuda_quick_advection_grad(op, grad):
     dimensions = op.get_attr("dimensions")
     timestep = op.get_attr("timestep")
     padding = op.get_attr("padding")
-    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(field, rho, u, v, dimensions, padding, timestep)
+    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(field, rho, u, v, grad, dimensions, padding, timestep)
     return [None, grad_rho, grad_u, grad_v]
 
 
