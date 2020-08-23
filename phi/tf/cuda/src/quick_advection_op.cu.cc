@@ -27,8 +27,8 @@ __device__ int pidx(int i, int j, int dim, int padding) {
  * v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j) respectivly
  * for properties centered on grid
  */
-__device__ float coefficients(int idx, float vel1, float vel2) {
-    float c[5];
+__device__ float* coefficients(float vel1, float vel2) {
+    float* c = (float*) malloc(5 * sizeof(float));
     c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
 
     if (vel1 >= 0 and vel2 >= 0) {
@@ -59,7 +59,7 @@ __device__ float coefficients(int idx, float vel1, float vel2) {
         c[4] = -0.125f * vel1;
     }
 
-    return c[idx];
+    return c;
 }
 
 
@@ -79,10 +79,7 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     float u1, u2;
     u1 = u[pidx(j, i, dim + 1, padding)];
     u2 = u[pidx(j, i + 1, dim + 1, padding)];
-    float cs_u[5];
-    for (int k = 0; k < 5; k++) {
-        cs_u[k] = coefficients(k, u1, u2);
-    }
+    float* cs_u = coefficients(u1, u2);
 
     delta_u_rho_delta_x =
         cs_u[0] * rho[pidx(j, i - 2, dim, padding)] +
@@ -94,10 +91,7 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     float v1, v2;
     v1 = v[pidx(j, i, dim, padding)];
     v2 = v[pidx(j + 1, i, dim, padding)];
-    float cs_v[5];
-    for (int k = 0; k < 5; k++) {
-        cs_v[k] = coefficients(k, v1, v2);
-    }
+    float* cs_v = coefficients(v1, v2);
 
     delta_v_rho_delta_y =
         cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
@@ -108,6 +102,9 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     
     float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
     output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
+
+    free(cs_u);
+    free(cs_v);
 }
 
 

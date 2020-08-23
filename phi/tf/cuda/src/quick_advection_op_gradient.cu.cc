@@ -27,8 +27,8 @@ __device__ int pidx(int i, int j, int dim, int padding) {
  * v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j) respectivly
  * for properties centered on grid
  */
-__device__ float coefficients(int idx, float vel1, float vel2) {
-    float c[5];
+__device__ float* coefficients(float vel1, float vel2) {
+    float* c = (float*) malloc(5 * sizeof(float));
     c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
 
     if (vel1 >= 0 and vel2 >= 0) {
@@ -59,12 +59,12 @@ __device__ float coefficients(int idx, float vel1, float vel2) {
         c[4] = -0.125f * vel1;
     }
 
-    return c[idx];
+    return c;
 }
 
 
-__device__ float coefficients_derivative(int idx, float vel1, float vel2) {
-    float c[5];
+__device__ float* coefficients_derivative(float vel1, float vel2) {
+    float* c = (float*) malloc(5 * sizeof(float));
     c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
 
     if (vel1 >= 0 and vel2 >= 0) {
@@ -95,7 +95,7 @@ __device__ float coefficients_derivative(int idx, float vel1, float vel2) {
         c[4] = -0.125f;
     }
 
-    return c[idx];
+    return c;
 }
 
 
@@ -114,16 +114,13 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
     v1 = v[pidx(j, i, dim, padding)];
     v2 = v[pidx(j + 1, i, dim, padding)];
 
-    float cs_u[5];
-    for (int k = 0; k < 5; k++) {
-        cs_u[k] = coefficients(k, u1, u2);
-    }
-    float cs_v[5];
-    for (int k = 0; k < 5; k++) {
-        cs_v[k] = coefficients(k, v1, v2);
-    }
+    float* cs_u = coefficients(u1, u2);
+    float* cs_v = coefficients(v1, v2);
 
     output_field[pidx(j, i, dim, padding)] = dt * -(cs_u[0] + cs_u[1] + cs_u[2] + cs_u[3] + cs_u[4]) - (cs_v[0] + cs_v[1] + cs_v[2] + cs_v[3] + cs_v[4]) * loss[IDX(j, i, dim)];
+    
+    free(cs_u);
+    free(cs_v);
 }
 
 
@@ -138,10 +135,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
     float u1, u2;
     u1 = u[pidx(j, i, dim + 1, padding)];
     u2 = u[pidx(j, i + 1, dim + 1, padding)];
-    float cs_u[5];
-    for (int k = 0; k < 5; k++) {
-        cs_u[k] = coefficients_derivative(k, u1, u2);
-    }
+    float* cs_u = coefficients_derivative(u1, u2);
     
     float loss_grad;
     if(i >= dim){
@@ -156,6 +150,8 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
         cs_u[3] * rho[pidx(j, i + 1, dim, padding)] +
         cs_u[4] * rho[pidx(j, i + 2, dim, padding)]
    ) * loss_grad;
+
+   free(cs_u);
 }
 
 
@@ -170,10 +166,7 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
     float v1, v2;
     v1 = v[pidx(j, i, dim, padding)];
     v2 = v[pidx(j + 1, i, dim, padding)];
-    float cs_v[5];
-    for (int k = 0; k < 5; k++) {
-        cs_v[k] = coefficients_derivative(k, v1, v2);
-    }
+    float* cs_v = coefficients_derivative(v1, v2);
 
     float loss_grad;
     if(j >= dim){
@@ -188,6 +181,8 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
         cs_v[3] * rho[pidx(j + 1, i, dim, padding)] +
         cs_v[4] * rho[pidx(j + 2, i, dim, padding)]
     ) * loss_grad;
+
+    free(cs_v);
 }
 
 
