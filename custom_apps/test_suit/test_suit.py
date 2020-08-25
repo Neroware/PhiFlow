@@ -27,6 +27,7 @@ from matplotlib import cm
 
 
 PI = 3.14159
+EXP0 = 2.71828
 
 semi_langrange_mode = False
 if not 'quick' in sys.argv:
@@ -834,7 +835,37 @@ else:
 TEST_CASES.append(case_11)
 
 
+### CASE 12 - Breaking Time ###
+data = []
+for y in range(0, RESOLUTION[0]):
+    next = []
+    for x in range(0, RESOLUTION[0]):
+        if x % 8 <= 3 and y % 8 <= 3:
+            next.append([0.1])
+        elif x % 8 > 3 and y % 8 <= 3:
+            next.append([0.2])
+        elif x % 8 <= 3 and y % 8 > 3:
+            next.append([0.2])
+        else:
+            next.append([0.1])
+    data.append(next)
+density_array = np.array([data], dtype="float32")
+density_field = CenteredGrid(density_array)
 
+data = []
+for y in range(0, RESOLUTION[0] + 1):
+    next = []
+    for x in range(0, RESOLUTION[0] + 1):
+        u = 0.2 * EXP0 ** -((2*(0.03125*x-1))**2)
+        next.append([0.0, u])
+    data.append(next)
+velocity_array = np.array([data], dtype="float32")
+velocity_field = StaggeredGrid(velocity_array)
+if not semi_langrange_mode:
+    case_12 = TestCase("Burgers_1", velocity_array, density_array, 0.1)
+else:
+    case_12 = TestCase("Burgers_1", velocity_field, density_field, 0.1)
+TEST_CASES.append(case_12)
 
 
 

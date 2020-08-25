@@ -15,3 +15,4 @@ rm -r Vel_Y_Block_4/*
 rm -r Vel_X_Block_2/*
 rm -r Vel_X_Block_3/*
 rm -r Vel_X_Block_4/*
+rm -r Burgers_1/*
