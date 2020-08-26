@@ -33,7 +33,7 @@ semi_langrange_mode = False
 if not 'quick' in sys.argv:
     semi_langrange_mode = True
 
-DT = 1.0
+DT = 10.0
 
 
 def to_staggered_grid(data_x, data_y, dim):
@@ -193,14 +193,14 @@ def run_test_cases(test_cases):
         plot_grid(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
         plot_grid(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
         
-        test_case.step()
+        #test_case.step()
         
-        v_1 = test_case.get_velocity_y()
-        u_1 = test_case.get_velocity_x()
-        den_1 = test_case.get_density()
-        plot_grid(den_1[0], test_case.name, test_case.name + "_den_1.jpg", den_min, den_max)
-        plot_grid(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
-        plot_grid(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
+        #v_1 = test_case.get_velocity_y()
+        #u_1 = test_case.get_velocity_x()
+        #den_1 = test_case.get_density()
+        #plot_grid(den_1[0], test_case.name, test_case.name + "_den_1.jpg", den_min, den_max)
+        #plot_grid(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
+        #plot_grid(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
 
         for i in range(0, int(100.0 * (0.1 / DT))):
             test_case.step()
