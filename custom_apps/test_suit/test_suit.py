@@ -33,6 +33,8 @@ semi_langrange_mode = False
 if not 'quick' in sys.argv:
     semi_langrange_mode = True
 
+DT = 0.1
+
 
 def to_staggered_grid(data_x, data_y, dim):
     result_data = []
@@ -200,7 +202,7 @@ def run_test_cases(test_cases):
         plot_grid(v_1[0], test_case.name, test_case.name + "_v_1.jpg", vel_min, vel_max)
         plot_grid(u_1[0], test_case.name, test_case.name + "_u_1.jpg", vel_min, vel_max)
 
-        for i in range(0, 100):
+        for i in range(0, int(100.0 * (0.1 / DT))):
             test_case.step()
 
         v_100 = test_case.get_velocity_y()
@@ -210,7 +212,7 @@ def run_test_cases(test_cases):
         plot_grid(v_100[0], test_case.name, test_case.name + "_v_100.jpg", vel_min, vel_max)
         plot_grid(u_100[0], test_case.name, test_case.name + "_u_100.jpg", vel_min, vel_max)
 
-        for i in range(0, 300):
+        for i in range(0, int(300.0 * (0.1 / DT))):
             test_case.step()
 
         v_300 = test_case.get_velocity_y()
@@ -253,9 +255,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_1 = TestCase("Sin_xy", velocity_array, density_array, 0.1, vel_constant=True)
+    case_1 = TestCase("Sin_xy", velocity_array, density_array, DT, vel_constant=True)
 else:
-    case_1 = TestCase("Sin_xy", velocity_field, density_field, 0.1, vel_constant=True)
+    case_1 = TestCase("Sin_xy", velocity_field, density_field, DT, vel_constant=True)
 TEST_CASES.append(case_1)
 
 
@@ -286,9 +288,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_2 = TestCase("Sin_xy_2", velocity_array, density_array, 0.1)
+    case_2 = TestCase("Sin_xy_2", velocity_array, density_array, DT)
 else:
-    case_2 = TestCase("Sin_xy_2", velocity_field, density_field, 0.1)
+    case_2 = TestCase("Sin_xy_2", velocity_field, density_field, DT)
 TEST_CASES.append(case_2)
 
 
@@ -322,9 +324,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_3 = TestCase("Escape_1", velocity_array, density_array, 0.1, vel_constant=True)
+    case_3 = TestCase("Escape_1", velocity_array, density_array, DT, vel_constant=True)
 else:
-    case_3 = TestCase("Escape_1", velocity_field, density_field, 0.1, vel_constant=True)
+    case_3 = TestCase("Escape_1", velocity_field, density_field, DT, vel_constant=True)
 TEST_CASES.append(case_3)
 
 
@@ -358,9 +360,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_4 = TestCase("Escape_2", velocity_array, density_array, 0.1)
+    case_4 = TestCase("Escape_2", velocity_array, density_array, DT)
 else:
-    case_4 = TestCase("Escape_2", velocity_field, density_field, 0.1)
+    case_4 = TestCase("Escape_2", velocity_field, density_field, DT)
 TEST_CASES.append(case_4)
 
 
@@ -394,9 +396,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_5 = TestCase("Simple_Stream", velocity_array, density_array, 0.1)
+    case_5 = TestCase("Simple_Stream", velocity_array, density_array, DT)
 else:
-    case_5 = TestCase("Simple_Stream", velocity_field, density_field, 0.1)
+    case_5 = TestCase("Simple_Stream", velocity_field, density_field, DT)
 TEST_CASES.append(case_5)
 
 
@@ -430,9 +432,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_6 = TestCase("Center_1", velocity_array, density_array, 0.1)
+    case_6 = TestCase("Center_1", velocity_array, density_array, DT)
 else:
-    case_6 = TestCase("Center_1", velocity_field, density_field, 0.1)
+    case_6 = TestCase("Center_1", velocity_field, density_field, DT)
 TEST_CASES.append(case_6)
 
 
@@ -467,9 +469,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_7a = TestCase("Vel_X_Block", velocity_array, density_array, 0.1)
+    case_7a = TestCase("Vel_X_Block", velocity_array, density_array, DT)
 else:
-    case_7a = TestCase("Vel_X_Block", velocity_field, density_field, 0.1)
+    case_7a = TestCase("Vel_X_Block", velocity_field, density_field, DT)
 TEST_CASES.append(case_7a)
 
 
@@ -503,9 +505,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_7b = TestCase("Vel_X_Block_2", velocity_array, density_array, 0.1)
+    case_7b = TestCase("Vel_X_Block_2", velocity_array, density_array, DT)
 else:
-    case_7b = TestCase("Vel_X_Block_2", velocity_field, density_field, 0.1)
+    case_7b = TestCase("Vel_X_Block_2", velocity_field, density_field, DT)
 TEST_CASES.append(case_7b)
 
 
@@ -539,9 +541,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_7c = TestCase("Vel_X_Block_3", velocity_array, density_array, 0.1)
+    case_7c = TestCase("Vel_X_Block_3", velocity_array, density_array, DT)
 else:
-    case_7c = TestCase("Vel_X_Block_3", velocity_field, density_field, 0.1)
+    case_7c = TestCase("Vel_X_Block_3", velocity_field, density_field, DT)
 TEST_CASES.append(case_7c)
 
 
@@ -575,9 +577,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_7d = TestCase("Vel_X_Block_4", velocity_array, density_array, 0.1)
+    case_7d = TestCase("Vel_X_Block_4", velocity_array, density_array, DT)
 else:
-    case_7d = TestCase("Vel_X_Block_4", velocity_field, density_field, 0.1)
+    case_7d = TestCase("Vel_X_Block_4", velocity_field, density_field, DT)
 TEST_CASES.append(case_7d)
 
 
@@ -612,9 +614,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_8a = TestCase("Vel_Y_Block", velocity_array, density_array, 0.1)
+    case_8a = TestCase("Vel_Y_Block", velocity_array, density_array, DT)
 else:
-    case_8a = TestCase("Vel_Y_Block", velocity_field, density_field, 0.1)
+    case_8a = TestCase("Vel_Y_Block", velocity_field, density_field, DT)
 TEST_CASES.append(case_8a)
 
 
@@ -648,9 +650,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_8b = TestCase("Vel_Y_Block_2", velocity_array, density_array, 0.1)
+    case_8b = TestCase("Vel_Y_Block_2", velocity_array, density_array, DT)
 else:
-    case_8b = TestCase("Vel_Y_Block_2", velocity_field, density_field, 0.1)
+    case_8b = TestCase("Vel_Y_Block_2", velocity_field, density_field, DT)
 TEST_CASES.append(case_8b)
 
 
@@ -684,9 +686,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_8c = TestCase("Vel_Y_Block_3", velocity_array, density_array, 0.1)
+    case_8c = TestCase("Vel_Y_Block_3", velocity_array, density_array, DT)
 else:
-    case_8c = TestCase("Vel_Y_Block_3", velocity_field, density_field, 0.1)
+    case_8c = TestCase("Vel_Y_Block_3", velocity_field, density_field, DT)
 TEST_CASES.append(case_8c)
 
 
@@ -720,9 +722,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_8d = TestCase("Vel_Y_Block_4", velocity_array, density_array, 0.1)
+    case_8d = TestCase("Vel_Y_Block_4", velocity_array, density_array, DT)
 else:
-    case_8d = TestCase("Vel_Y_Block_4", velocity_field, density_field, 0.1)
+    case_8d = TestCase("Vel_Y_Block_4", velocity_field, density_field, DT)
 TEST_CASES.append(case_8d)
 
 
@@ -757,9 +759,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_9 = TestCase("Vel_Y_Only", velocity_array, density_array, 0.1)
+    case_9 = TestCase("Vel_Y_Only", velocity_array, density_array, DT)
 else:
-    case_9 = TestCase("Vel_Y_Only", velocity_field, density_field, 0.1)
+    case_9 = TestCase("Vel_Y_Only", velocity_field, density_field, DT)
 TEST_CASES.append(case_9)
 
 
@@ -793,9 +795,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_10 = TestCase("Vel_X_Only", velocity_array, density_array, 0.1)
+    case_10 = TestCase("Vel_X_Only", velocity_array, density_array, DT)
 else:
-    case_10 = TestCase("Vel_X_Only", velocity_field, density_field, 0.1)
+    case_10 = TestCase("Vel_X_Only", velocity_field, density_field, DT)
 TEST_CASES.append(case_10)
 
 
@@ -829,9 +831,9 @@ velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 
 if not semi_langrange_mode:
-    case_11 = TestCase("Vel_XY", velocity_array, density_array, 0.1)
+    case_11 = TestCase("Vel_XY", velocity_array, density_array, DT)
 else:
-    case_11 = TestCase("Vel_XY", velocity_field, density_field, 0.1)
+    case_11 = TestCase("Vel_XY", velocity_field, density_field, DT)
 TEST_CASES.append(case_11)
 
 
@@ -862,9 +864,9 @@ for y in range(0, RESOLUTION[0] + 1):
 velocity_array = np.array([data], dtype="float32")
 velocity_field = StaggeredGrid(velocity_array)
 if not semi_langrange_mode:
-    case_12 = TestCase("Burgers_1", velocity_array, density_array, 0.1)
+    case_12 = TestCase("Burgers_1", velocity_array, density_array, DT)
 else:
-    case_12 = TestCase("Burgers_1", velocity_field, density_field, 0.1)
+    case_12 = TestCase("Burgers_1", velocity_field, density_field, DT)
 TEST_CASES.append(case_12)
 
 
