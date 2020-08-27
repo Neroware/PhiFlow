@@ -11,7 +11,7 @@ REGISTER_OP("QuickAdvectionGradient")
     .Input("field_padded: float32")
     .Input("vel_u_field: float32")
     .Input("vel_v_field: float32")
-    .Input("loss: float32")
+    .Input("grad: float32")
     .Attr("dimensions: int")
     .Attr("padding: int")
     .Attr("timestep: float")
@@ -38,7 +38,7 @@ void LaunchQUICKAdvectionScalarGradientKernel(
     const float* rho, 
     const float* u, 
     const float* v, 
-    const float* loss
+    const float* grad
 );
 
 
@@ -64,7 +64,7 @@ public:
         const Tensor& input_field_padded = context->input(1);
         const Tensor& input_vel_u = context->input(2);
         const Tensor& input_vel_v = context->input(3);
-        const Tensor& input_loss = context->input(4);
+        const Tensor& input_grad = context->input(4);
 
         Tensor* field_grds = NULL;
         OP_REQUIRES_OK(context, context->allocate_output(0, input_field_padded.shape(), &field_grds));
@@ -81,9 +81,9 @@ public:
         auto field = input_field_padded.flat<float>();
         auto u = input_vel_u.flat<float>();
         auto v = input_vel_v.flat<float>();
-        auto loss = input_loss.flat<float>();
+        auto grad = input_grad.flat<float>();
 
-        LaunchQUICKAdvectionScalarGradientKernel(field_grds_flat.data(), vel_u_grds_flat.data(), vel_v_grds_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), loss.data());
+        LaunchQUICKAdvectionScalarGradientKernel(field_grds_flat.data(), vel_u_grds_flat.data(), vel_v_grds_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), grad.data());
     }
 };
 
