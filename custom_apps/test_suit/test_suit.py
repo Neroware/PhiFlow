@@ -33,7 +33,7 @@ semi_langrange_mode = False
 if not 'quick' in sys.argv:
     semi_langrange_mode = True
 
-DT = 0.1
+DT = 1.0
 
 
 def to_staggered_grid(data_x, data_y, dim):
