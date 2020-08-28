@@ -33,7 +33,7 @@ semi_langrange_mode = False
 if not 'quick' in sys.argv:
     semi_langrange_mode = True
 
-DT = 1.0
+DT = 0.1
 
 
 def to_staggered_grid(data_x, data_y, dim):
@@ -89,9 +89,9 @@ class TestCase:
 
             with tf.Session("") as sess:
                 grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
-                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -0.1, 0.1)
-                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -0.1, 0.1)
-                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -0.1, 0.1)
+                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -0.05, 0.05)
+                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -0.05, 0.05)
+                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -0.05, 0.05)
                 sess.close()
 
 

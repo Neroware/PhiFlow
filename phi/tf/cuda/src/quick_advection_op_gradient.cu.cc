@@ -219,7 +219,7 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
     float* cs_v3 = coefficients(v2, v3);
     float* cs_v4 = coefficients(v2 + 1.0f, v3);
 
-    output_field[pidx(j, i, dim + 1, padding)] = 0.0f;
+    output_field[pidx(j, i, dim, padding)] = 0.0f;
     if (j > 0) {
         float delta_v_rho_delta_y_1 =
             cs_v1[0] * rho[pidx(j - 3, i, dim, padding)] +
