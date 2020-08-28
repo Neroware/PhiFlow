@@ -181,7 +181,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_u2[4] * rho[pidx(j, i + 1, dim, padding)];
         diff_1 = (-delta_u_rho_delta_x_2) - (-delta_u_rho_delta_x_1);
         grad_1 = grad[IDX(j, i - 1, dim)];
-        output_field[pidx(j, i, dim + 1, padding)] = diff_1;
+        //output_field[pidx(j, i, dim + 1, padding)] = diff_1;
     }
     if (i < dim - 1) {
         float delta_u_rho_delta_x_1 =
@@ -198,6 +198,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_u4[4] * rho[pidx(j, i + 2, dim, padding)];
         diff_2 = (-delta_u_rho_delta_x_2) - (-delta_u_rho_delta_x_1);
         grad_2 = grad[IDX(j, i, dim)];
+        output_field[pidx(j, i, dim + 1, padding)] = diff_2;
     }
 
     //output_field[pidx(j, i, dim + 1, padding)] = diff_1 + diff_2;
