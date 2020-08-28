@@ -37,9 +37,9 @@ class CUDAFlow(App):
 
         self.physics = SimpleFlowPhysics()
         #self.physics = SemiLangFlowPhysics()
-        self.timestep = 0.1
+        self.timestep = 1.0
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:6, 0:6], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:8, 0:8], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid_2()
         #fluid.density = self._get_density_grid()
@@ -131,7 +131,7 @@ class CUDAFlow(App):
                 #    next.append([0.2])
                 #else:
                 #    next.append([0.0])
-                next.append([1.0])
+                next.append([0.1])
             data.append(next)
 
         density_array = np.array([data], dtype="float32")
@@ -179,11 +179,13 @@ class CUDAFlow(App):
 
                 #next.append([-0.2, 0.3])
                 
-                #if(x == 50):
-                #    next.append([-0.1, 0.1])
+                next.append([0.0, x * 0.5])
+
+                #if(x < 4):
+                #    next.append([0.0, 1.0])
                 #else:
-                #    next.append([0.0, 0.2])
-                next.append([0.0, 0.1])
+                #    next.append([0.0, -1.0])
+                #next.append([0.1, -0.1])
 
                 #next.append([0.02 * (y - 50), 0.02 * (x - 50)])
 

@@ -11,7 +11,7 @@ DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
 import numpy as np
 
-from phi.tf.tf_cuda_quick_advection import tf_cuda_quick_advection
+from phi.tf.tf_cuda_quick_advection import *
 from phi.physics.field.advect import semi_lagrangian
 
 import math
@@ -60,6 +60,36 @@ class TestCase:
         self.vel_constant = vel_constant
         self.den_interval = den_interval
         self.vel_interval = vel_interval
+
+
+    def save_gradients(self):
+        if not semi_langrange_mode:
+            try:
+                velocity = StaggeredGrid(self.velocity_field)
+            except:
+                velocity = self.velocity_field
+            try:
+                density = CenteredGrid(self.density_field)
+            except:
+                density = self.density_field
+            dt = self.timestep
+            dim = RESOLUTION[0]
+            tf.compat.v1.reset_default_graph()
+        
+            density_tensor = tf.constant(density.data)
+            density_tensor_padded = tf.constant(density.padded(2).data)
+            velocity_v_field, velocity_u_field = velocity.data
+            velocity_v_tensor = tf.constant(velocity_v_field.data)
+            velocity_u_tensor = tf.constant(velocity_u_field.data)
+            velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
+            velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
+
+            with tf.Session("") as sess:
+                grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
+                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -1.0, 1.0)
+                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -1.0, 1.0)
+                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -1.0, 1.0)
+                sess.close()
 
 
     def step(self):
@@ -189,7 +219,8 @@ def run_test_cases(test_cases):
         plot_grid(den_init[0], test_case.name, test_case.name + "_den_init.jpg", den_min, den_max)
         plot_grid(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
         plot_grid(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
-        
+
+        test_case.save_gradients()
         test_case.step()
         
         v_1 = test_case.get_velocity_y()

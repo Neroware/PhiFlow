@@ -155,12 +155,12 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
     u2 = u[pidx(j, i, dim + 1, padding)];
     u3 = u[pidx(j, i + 1, dim + 1, padding)];
 
-    cs_u1 = coefficients(u1, u2);
-    cs_u2 = coefficients(u1, u2 + 1.0f);
-    cs_u3 = coefficients(u2, u3);
-    cs_u4 = coefficients(u2 + 1.0f, u3);
+    float* cs_u1 = coefficients(u1, u2);
+    float* cs_u2 = coefficients(u1, u2 + 1.0f);
+    float* cs_u3 = coefficients(u2, u3);
+    float* cs_u4 = coefficients(u2 + 1.0f, u3);
 
-    output_field[pidx(j, i, dim + 1)] = 0.0f;
+    output_field[pidx(j, i, dim + 1, padding)] = 0.0f;
     if (i > 0) {
         float delta_u_rho_delta_x_1 =
             cs_u1[0] * rho[pidx(j, i - 3, dim, padding)] +
@@ -174,7 +174,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_u2[2] * rho[pidx(j, i - 1, dim, padding)] +
             cs_u2[3] * rho[pidx(j, i, dim, padding)] +
             cs_u2[4] * rho[pidx(j, i + 1, dim, padding)];
-        float diff_1 = delta_u_rho_delta_x_2 - delta_u_rho_delta_x_1;
+        float diff_1 = (-delta_u_rho_delta_x_2) - (-delta_u_rho_delta_x_1);
         output_field[pidx(j, i, dim + 1, padding)] += diff_1 * grad[IDX(j, i - 1, dim)] * dt;
     }
     if (i < dim - 1) {
@@ -190,7 +190,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_u4[2] * rho[pidx(j, i, dim, padding)] +
             cs_u4[3] * rho[pidx(j, i + 1, dim, padding)] +
             cs_u4[4] * rho[pidx(j, i + 2, dim, padding)];
-        diff_2 = delta_u_rho_delta_x_2 - delta_u_rho_delta_x_1;
+        float diff_2 = (-delta_u_rho_delta_x_2) - (-delta_u_rho_delta_x_1);
         output_field[pidx(j, i, dim + 1, padding)] += diff_2 * grad[IDX(j, i, dim)] * dt;
     }
 
@@ -201,7 +201,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
 }
 
 
-__global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
+__global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -214,12 +214,12 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
     v2 = v[pidx(j, i, dim, padding)];
     v3 = v[pidx(j + 1, i, dim, padding)];
 
-    cs_v1 = coefficients(v1, v2);
-    cs_v2 = coefficients(v1, v2 + 1.0f);
-    cs_v3 = coefficients(v2, v3);
-    cs_v4 = coefficients(v2 + 1.0f, v3);
+    float* cs_v1 = coefficients(v1, v2);
+    float* cs_v2 = coefficients(v1, v2 + 1.0f);
+    float* cs_v3 = coefficients(v2, v3);
+    float* cs_v4 = coefficients(v2 + 1.0f, v3);
 
-    output_field[pidx(j, i, dim + 1)] = 0.0f;
+    output_field[pidx(j, i, dim + 1, padding)] = 0.0f;
     if (j > 0) {
         float delta_v_rho_delta_y_1 =
             cs_v1[0] * rho[pidx(j - 3, i, dim, padding)] +
@@ -228,12 +228,12 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_v1[3] * rho[pidx(j, i, dim, padding)] +
             cs_v1[4] * rho[pidx(j + 1, i, dim, padding)];
         float delta_v_rho_delta_y_2 =
-            cs_u2[0] * rho[pidx(j - 3, i, dim, padding)] +
-            cs_u2[1] * rho[pidx(j - 2, i, dim, padding)] +
-            cs_u2[2] * rho[pidx(j - 1, i, dim, padding)] +
-            cs_u2[3] * rho[pidx(j, i, dim, padding)] +
-            cs_u2[4] * rho[pidx(j + 1, i, dim, padding)];
-        float diff_1 = delta_v_rho_delta_y_2 - delta_v_rho_delta_y_1;
+            cs_v2[0] * rho[pidx(j - 3, i, dim, padding)] +
+            cs_v2[1] * rho[pidx(j - 2, i, dim, padding)] +
+            cs_v2[2] * rho[pidx(j - 1, i, dim, padding)] +
+            cs_v2[3] * rho[pidx(j, i, dim, padding)] +
+            cs_v2[4] * rho[pidx(j + 1, i, dim, padding)];
+        float diff_1 = (-delta_v_rho_delta_y_2) - (-delta_v_rho_delta_y_1);
         output_field[pidx(j, i, dim, padding)] += diff_1 * grad[IDX(j - 1, i, dim)] * dt;
     }
     if (j < dim - 1) {
@@ -244,12 +244,12 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
             cs_v3[3] * rho[pidx(j + 1, i, dim, padding)] +
             cs_v3[4] * rho[pidx(j + 2, i, dim, padding)];
         float delta_v_rho_delta_y_2 =
-            cs_u4[0] * rho[pidx(j - 2, i, dim, padding)] +
-            cs_u4[1] * rho[pidx(j - 1, i, dim, padding)] +
-            cs_u4[2] * rho[pidx(j, i, dim, padding)] +
-            cs_u4[3] * rho[pidx(j + 1, i, dim, padding)] +
-            cs_u4[4] * rho[pidx(j + 2, i, dim, padding)];
-        diff_2 = delta_v_rho_delta_y_2 - delta_u_rho_delta_x_1;
+            cs_v4[0] * rho[pidx(j - 2, i, dim, padding)] +
+            cs_v4[1] * rho[pidx(j - 1, i, dim, padding)] +
+            cs_v4[2] * rho[pidx(j, i, dim, padding)] +
+            cs_v4[3] * rho[pidx(j + 1, i, dim, padding)] +
+            cs_v4[4] * rho[pidx(j + 2, i, dim, padding)];
+        float diff_2 = (-delta_v_rho_delta_y_2) - (-delta_v_rho_delta_y_1);
         output_field[pidx(j, i, dim, padding)] += diff_2 * grad[IDX(j, i, dim)] * dt;
     }
 
