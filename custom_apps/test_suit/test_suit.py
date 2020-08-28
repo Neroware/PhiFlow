@@ -89,9 +89,9 @@ class TestCase:
 
             with tf.Session("") as sess:
                 grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
-                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -0.001, 0.001)
-                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -0.001, 0.001)
-                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -0.001, 0.001)
+                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -0.01, 0.01)
+                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -0.01, 0.01)
+                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -0.01, 0.01)
                 sess.close()
 
 
