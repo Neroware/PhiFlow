@@ -63,6 +63,71 @@ __device__ float* coefficients(float vel1, float vel2) {
 }
 
 
+__device__ float* coefficients_derivative_1(float vel1, float vel2) {
+    float* c = (float*) malloc(5 * sizeof(float));
+    c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
+
+    if (vel1 >= 0 and vel2 >= 0) {
+        c[0] = 0.125f;
+        c[1] = -0.75f;
+        c[2] = -0.375f;
+    }
+
+    else if (vel1 <= 0 and vel2 <= 0) {
+        c[1] = -0.375f;
+        c[2] = -0.75f;
+        c[3] = 0.125f;
+    }
+
+    else if (vel1 < 0 and vel2 > 0) {
+        c[1] = -0.375f;
+        c[2] = -0.75f;
+        c[3] = 0.125f;
+    }
+
+    else {
+        c[0] = 0.125f;
+        c[1] = -0.75f;
+        c[2] = -0.375;
+        c[3] = 0.0f;
+        c[4] = -0.125f;
+    }
+
+    return c;
+}
+
+
+__device__ float* coefficients_derivative_2(float vel1, float vel2) {
+    float* c = (float*) malloc(5 * sizeof(float));
+    c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
+
+    if (vel1 >= 0 and vel2 >= 0) {
+        c[1] = -0.125f;
+        c[2] = 0.75f;
+        c[3] = 0.375f;
+    }
+
+    else if (vel1 <= 0 and vel2 <= 0) {
+        c[2] = 0.375f;
+        c[3] = 0.75f;
+        c[4] = -0.125f;
+    }
+
+    else if (vel1 < 0 and vel2 > 0) {
+        c[1] = -0.125f;
+        c[2] = 0.75f;
+        c[3] = 0.375f;
+    }
+
+    else{
+        c[2] = 0.375f;
+        c[3] = 0.75f;
+    }
+
+    return c;
+}
+
+
 __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
@@ -143,6 +208,96 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
 
 
 __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim + 1 || j >= dim) {
+        return;
+    }
+
+    float u1, u2, u3;
+    u1 = u[pidx(j, i - 1, dim + 1, padding)];
+    u2 = u[pidx(j, i, dim + 1, padding)];
+    u3 = u[pidx(j, i + 1, dim + 1, padding)];
+
+    float* cs_u1 = coefficients_derivative_2(u1, u2);
+    float* cs_u2 = coefficients_derivative_1(u2, u3);
+
+    float grad_1 = 
+        cs_u1[0] * rho[pidx(j, i - 3, dim, padding)] +
+        cs_u1[1] * rho[pidx(j, i - 2, dim, padding)] +
+        cs_u1[2] * rho[pidx(j, i - 1, dim, padding)] +
+        cs_u1[3] * rho[pidx(j, i, dim, padding)] +
+        cs_u1[4] * rho[pidx(j, i + 1, dim, padding)];
+
+    float grad_2 = 
+        cs_u2[0] * rho[pidx(j, i - 2, dim, padding)] +
+        cs_u2[1] * rho[pidx(j, i - 1, dim, padding)] +
+        cs_u2[2] * rho[pidx(j, i, dim, padding)] +
+        cs_u2[3] * rho[pidx(j, i + 1, dim, padding)] +
+        cs_u2[4] * rho[pidx(j, i + 2, dim, padding)];
+
+    if(i == 0){
+        output_field[pidx(j, i, dim + 1, padding)] = grad_2 * grad[IDX(j, i, dim)];
+    }
+    else if(i == dim){
+        output_field[pidx(j, i, dim + 1, padding)] = grad_1 * grad[IDX(j, i - 1, dim)];
+    }
+    else{
+        output_field[pidx(j, i, dim + 1, padding)] = grad_1 * grad[IDX(j, i - 1, dim)] + grad_2 * grad[IDX(j, i, dim)];
+    }
+
+    free(cs_u1);
+    free(cs_u2);
+}
+
+
+__global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
+    int i = CUDA_THREAD_COL;
+    int j = CUDA_THREAD_ROW;
+
+    if (i >= dim || j >= dim + 1) {
+        return;
+    }
+
+    float v1, v2, v3;
+    v1 = v[pidx(j - 1, i, dim, padding)];
+    v2 = v[pidx(j, i, dim, padding)];
+    v3 = v[pidx(j + 1, i, dim, padding)];
+
+    float* cs_v1 = coefficients_derivative_2(v1, v2);
+    float* cs_v2 = coefficients_derivative_1(v2, v3);
+
+    float grad_1 =
+        cs_v1[0] * rho[pidx(j - 3, i, dim, padding)] +
+        cs_v1[1] * rho[pidx(j - 2, i, dim, padding)] +
+        cs_v1[2] * rho[pidx(j - 1, i, dim, padding)] +
+        cs_v1[3] * rho[pidx(j, i, dim, padding)] +
+        cs_v1[4] * rho[pidx(j + 1, i, dim, padding)];
+
+    float grad_2 =
+        cs_v2[0] * rho[pidx(j - 2, i, dim, padding)] +
+        cs_v2[1] * rho[pidx(j - 1, i, dim, padding)] +
+        cs_v2[2] * rho[pidx(j, i, dim, padding)] +
+        cs_v2[3] * rho[pidx(j + 1, i, dim, padding)] +
+        cs_v2[4] * rho[pidx(j + 2, i, dim, padding)];
+
+    if(j == 0){
+        output_field[pidx(j, i, dim, padding)] = grad_2 * grad[IDX(j, i, dim)];
+    }
+    else if(j == dim){
+        output_field[pidx(j, i, dim, padding)] = grad_1 * grad[IDX(j - 1, i, dim)];
+    }
+    else{
+        output_field[pidx(j, i, dim, padding)] = grad_1 * grad[IDX(j - 1, i, dim)] + grad_2 * grad[IDX(j, i, dim)];
+    }
+
+    free(cs_v1);
+    free(cs_v2);
+}
+
+
+/*__global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u, float* v, float* grad, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -265,7 +420,7 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
     free(cs_v2);
     free(cs_v3);
     free(cs_v4);
-}
+}*/
 
 
 
