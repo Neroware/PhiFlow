@@ -223,7 +223,7 @@ def run_test_cases(test_cases):
         plot_grid(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
         plot_grid(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
 
-        test_case.save_gradients("_0")
+        test_case.save_gradients("_init")
         #test_case.step()
         
         #v_1 = test_case.get_velocity_y()
@@ -246,14 +246,35 @@ def run_test_cases(test_cases):
 
         for i in range(0, int(300.0 * (0.1 / DT))):
             test_case.step()
-        test_case.save_gradients("_300")
+        test_case.save_gradients("_400")
 
-        v_300 = test_case.get_velocity_y()
-        u_300 = test_case.get_velocity_x()
-        den_300 = test_case.get_density()
-        plot_grid(den_300[0], test_case.name, test_case.name + "_den_300.jpg", den_min, den_max)
-        plot_grid(v_300[0], test_case.name, test_case.name + "_v_300.jpg", vel_min, vel_max)
-        plot_grid(u_300[0], test_case.name, test_case.name + "_u_300.jpg", vel_min, vel_max)
+        v_400 = test_case.get_velocity_y()
+        u_400 = test_case.get_velocity_x()
+        den_400 = test_case.get_density()
+        plot_grid(den_400[0], test_case.name, test_case.name + "_den_400.jpg", den_min, den_max)
+        plot_grid(v_400[0], test_case.name, test_case.name + "_v_400.jpg", vel_min, vel_max)
+        plot_grid(u_400[0], test_case.name, test_case.name + "_u_400.jpg", vel_min, vel_max)
+
+        for i in range(0, int(200.0 * (0.1 / DT))):
+            test_case.step()
+        test_case.save_gradients("_600")
+
+        v_600 = test_case.get_velocity_y()
+        u_600 = test_case.get_velocity_x()
+        den_600 = test_case.get_density()
+        plot_grid(den_600[0], test_case.name, test_case.name + "_den_600.jpg", den_min, den_max)
+        plot_grid(v_600[0], test_case.name, test_case.name + "_v_600.jpg", vel_min, vel_max)
+        plot_grid(u_600[0], test_case.name, test_case.name + "_u_600.jpg", vel_min, vel_max)
+
+        for i in range(0, int(200.0 * (0.1 / DT))):
+            test_case.step()
+        test_case.save_gradients("_800")
+        v_800 = test_case.get_velocity_y()
+        u_800 = test_case.get_velocity_x()
+        den_800 = test_case.get_density()
+        plot_grid(den_800[0], test_case.name, test_case.name + "_den_800.jpg", den_min, den_max)
+        plot_grid(v_800[0], test_case.name, test_case.name + "_v_800.jpg", vel_min, vel_max)
+        plot_grid(u_800[0], test_case.name, test_case.name + "_u_800.jpg", vel_min, vel_max)
 
         print("Done!")
 
