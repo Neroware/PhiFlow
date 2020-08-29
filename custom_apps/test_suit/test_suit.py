@@ -65,7 +65,7 @@ class TestCase:
         self.vel_interval = vel_interval
 
 
-    def save_gradients(self):
+    def save_gradients(self, filename_postfix):
         if not semi_langrange_mode:
             try:
                 velocity = StaggeredGrid(self.velocity_field)
@@ -89,9 +89,9 @@ class TestCase:
 
             with tf.Session("") as sess:
                 grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
-                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad.jpg", -0.01, 0.01)
-                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad.jpg", -0.01, 0.01)
-                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad.jpg", -0.01, 0.01)
+                plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad" + filename_postfix + ".jpg", -0.04, 0.04)
+                plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad" + filename_postfix + ".jpg", -0.04, 0.04)
+                plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad" + filename_postfix + ".jpg", -0.04, 0.04)
                 sess.close()
 
 
@@ -223,7 +223,7 @@ def run_test_cases(test_cases):
         plot_grid(v_init[0], test_case.name, test_case.name + "_v_init.jpg", vel_min, vel_max)
         plot_grid(u_init[0], test_case.name, test_case.name + "_u_init.jpg", vel_min, vel_max)
 
-        test_case.save_gradients()
+        test_case.save_gradients("_0")
         #test_case.step()
         
         #v_1 = test_case.get_velocity_y()
@@ -235,6 +235,7 @@ def run_test_cases(test_cases):
 
         for i in range(0, int(100.0 * (0.1 / DT))):
             test_case.step()
+        test_case.save_gradients("_100")
 
         v_100 = test_case.get_velocity_y()
         u_100 = test_case.get_velocity_x()
@@ -245,6 +246,7 @@ def run_test_cases(test_cases):
 
         for i in range(0, int(300.0 * (0.1 / DT))):
             test_case.step()
+        test_case.save_gradients("_300")
 
         v_300 = test_case.get_velocity_y()
         u_300 = test_case.get_velocity_x()
