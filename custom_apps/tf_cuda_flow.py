@@ -39,10 +39,10 @@ class CUDAFlow(App):
         #self.physics = SemiLangFlowPhysics()
         self.timestep = 1.0
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:8, 0:8], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
-        fluid.density = self._get_density_grid_2()
-        #fluid.density = self._get_density_grid()
+        #fluid.density = self._get_density_grid_2()
+        fluid.density = self._get_density_grid()
         #world.add(ConstantVelocity(box[0:100, 0:100], velocity=(1, 0)))
 
         self.add_field('Velocity', lambda: fluid.velocity)
@@ -55,14 +55,6 @@ class CUDAFlow(App):
         dt = self.timestep
         dim = RESOLUTION[0]
 
-        #grds_x, grds_y = tf_quick_density_gradients(density, velocity, 1, 1, dt)
-        #print("Gradient: ", grds_x)
-        #grds = tf_semi_lagrange_density_gradients(density, velocity, dt)
-        #with tf.Session("") as sess:
-        #    for grd in grds_y:
-        #        print(">>> Grd.: ", grd.eval())
-        #    sess.close()
-
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
         density_tensor_padded = tf.constant(density.padded(2).data)
@@ -73,12 +65,12 @@ class CUDAFlow(App):
         velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
         # Compute Gradients
-        grds = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
-        print("Gradient: ", grds)
-        with tf.Session("") as sess:
-            for grd in grds:
-                print(">>> Grd.: ", grd.eval())
-            sess.close()
+        #grds = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
+        #print("Gradient: ", grds)
+        #with tf.Session("") as sess:
+        #    for grd in grds:
+        #        print(">>> Grd.: ", grd.eval())
+        #    sess.close()
 
         den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
@@ -106,13 +98,13 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0]):
                 if x % 8 <= 3 and y % 8 <= 3:
-                    next.append([0.5])
+                    next.append([0.1])
                 elif x % 8 > 3 and y % 8 <= 3:
-                    next.append([1.0])
+                    next.append([0.2])
                 elif x % 8 <= 3 and y % 8 > 3:
-                    next.append([1.0])
+                    next.append([0.2])
                 else:
-                    next.append([0.5])
+                    next.append([0.1])
             data.append(next)
 
         density_array = np.array([data], dtype="float32")
@@ -179,7 +171,7 @@ class CUDAFlow(App):
 
                 #next.append([-0.2, 0.3])
                 
-                next.append([0.0, x * 0.5])
+                #next.append([0.0, x * 0.5])
 
                 #if(x < 4):
                 #    next.append([0.0, 1.0])
@@ -194,7 +186,8 @@ class CUDAFlow(App):
                 #else:
                 #    next.append([0.1, 0.1])
 
-                #next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
+                dim = RESOLUTION[0]
+                next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
                 
                 #next.append([-0.5, -0.2 * (y / 100.0)])
 
