@@ -8,6 +8,7 @@
 #define CUDA_THREAD_ID (blockIdx.x * blockDim.x + threadIdx.x)
 #define CUDA_TIME clock()
 #define IDX(i, j, dim) (i) * (dim) + (j)
+#define CLOCK_T unsigned long long
 
 #include <cublas_v2.h>
 #include <stdio.h>
@@ -62,7 +63,7 @@ __device__ void coefficients(float* c, float vel1, float vel2) {
 
 /* =========================================== Density Advection =====================================*/
 
-__global__ void advectDensityQuick(unsigned long long* time, float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectDensityQuick(CLOCK_T* time, float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -70,7 +71,7 @@ __global__ void advectDensityQuick(unsigned long long* time, float* output_field
         return;
     }
 
-    unsigned long long start_time = CUDA_TIME;
+    CLOCK_T start_time = CUDA_TIME;
 
     float delta_u_rho_delta_x, delta_v_rho_delta_y;
     delta_u_rho_delta_x = delta_v_rho_delta_y = 0.0f;
@@ -104,16 +105,14 @@ __global__ void advectDensityQuick(unsigned long long* time, float* output_field
     float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
     output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
 
-    unsigned long long finish_time = CUDA_TIME;
-    if(i == 25 && j == 25){
-        *time = finish_time - start_time;
-    }
+    CLOCK_T finish_time = CUDA_TIME;
+    time[IDX(j, i, dim)] = finish_time - start_time;
 }
 
 
 /* ======================================= Velocity Advection =================================================== */
 
-__global__ void advectVelocityYQuick(unsigned long long* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectVelocityYQuick(CLOCK_T* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -121,7 +120,7 @@ __global__ void advectVelocityYQuick(unsigned long long* time, float* output_fie
         return;
     }
 
-    unsigned long long start_time = CUDA_TIME;
+    CLOCK_T start_time = CUDA_TIME;
 
     float lerped_u1 = 0.5f * (u[pidx(j - 1, i, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
     float lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j + 1, i, dim + 1, padding)]);
@@ -203,14 +202,12 @@ __global__ void advectVelocityYQuick(unsigned long long* time, float* output_fie
     float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
     output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_v_delta_t * dt;
 
-    unsigned long long finish_time = CUDA_TIME;
-    if(i == 25 && j == 25){
-        *time = finish_time - start_time;
-    }
+    CLOCK_T finish_time = CUDA_TIME;
+    time[IDX(j, i, dim)] = finish_time - start_time;
 }
 
 
-__global__ void advectVelocityXQuick(unsigned long long* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectVelocityXQuick(CLOCK_T* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -218,7 +215,7 @@ __global__ void advectVelocityXQuick(unsigned long long* time, float* output_fie
         return;
     }
 
-    unsigned long long start_time = CUDA_TIME;
+    CLOCK_T start_time = CUDA_TIME;
 
     float lerped_v1 = 0.5f * (v[pidx(j, i - 1, dim, padding)] + v[pidx(j, i, dim, padding)]);
     float lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j, i + 1, dim, padding)]);
@@ -300,10 +297,8 @@ __global__ void advectVelocityXQuick(unsigned long long* time, float* output_fie
     float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
     output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)] + delta_u_delta_t * dt;
 
-    unsigned long long finish_time = CUDA_TIME;
-    if(i == 25 && j == 25){
-        *time = finish_time - start_time;
-    }
+    CLOCK_T finish_time = CUDA_TIME;
+    time[IDX(j, i, dim + 1)] = finish_time - start_time;
 }
 
 
@@ -328,9 +323,9 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
     // Benchmarking
-    unsigned long long time;
-    unsigned long long* d_time;
-    cudaMalloc(&d_time, sizeof(unsigned long long));
+    CLOCK_T* time = (CLOCK_T*) malloc(DIM * DIM * sizeof(CLOCK_T));
+    CLOCK_T* d_time;
+    cudaMalloc(&d_time, DIM * DIM * sizeof(CLOCK_T));
 
     // Setup output pointer
     float* d_out;
@@ -341,9 +336,17 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     cudaMemcpy(output_field, d_out, DIM * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Benchmarking
-    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaMemcpy(time, d_time, DIM * DIM * sizeof(CLOCK_T), cudaMemcpyDeviceToHost);
     cudaFree(d_time);
-    std::cout << "Thread at position (25, 25) of scalar advection took: " << time << "." << std::endl;
+    CLOCK_T total_time = 0;
+    for(int j = 0; j < DIM; j++){
+        for(int i = 0; i < DIM; i++){
+            total_time += time[IDX(j, i, DIM)];
+        }
+    }
+    CLOCK_T avg_time = total_time / (DIM * DIM);
+    std::cout << "Scalar advection took: " << total_time << " --- Average per thread: " << avg_time << std::endl;
+    free(time);
 
     // Cleanup
     cudaFree(d_rho);
@@ -370,9 +373,9 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
     // Benchmarking
-    unsigned long long time;
-    unsigned long long* d_time;
-    cudaMalloc(&d_time, sizeof(unsigned long long));
+    CLOCK_T* time = (CLOCK_T*) malloc(DIM * (DIM + 1) * sizeof(CLOCK_T));
+    CLOCK_T* d_time;
+    cudaMalloc(&d_time, DIM * (DIM + 1) * sizeof(CLOCK_T));
 
     float* d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
@@ -380,9 +383,17 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Benchmarking
-    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaMemcpy(time, d_time, DIM * (DIM + 1) * sizeof(CLOCK_T), cudaMemcpyDeviceToHost);
     cudaFree(d_time);
-    std::cout << "Thread at position (25, 24.5) of velocity v advection took: " << time << "." << std::endl;
+    CLOCK_T total_time = 0;
+    for(int j = 0; j < DIM + 1; j++){
+        for(int i = 0; i < DIM; i++){
+            total_time += time[IDX(j, i, DIM)];
+        }
+    }
+    CLOCK_T avg_time = total_time / (DIM * (DIM + 1));
+    std::cout << "Vel v advection took: " << total_time << " --- Average per thread: " << avg_time << std::endl;
+    free(time);
 
     // Cleanup
     cudaFree(d_u);
@@ -408,9 +419,9 @@ void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
     // Benchmarking
-    unsigned long long time;
-    unsigned long long* d_time;
-    cudaMalloc(&d_time, sizeof(unsigned long long));
+    CLOCK_T* time = (CLOCK_T*) malloc((DIM + 1) * DIM * sizeof(CLOCK_T));
+    CLOCK_T* d_time;
+    cudaMalloc(&d_time, (DIM + 1) * DIM * sizeof(CLOCK_T));
 
     float* d_out;
     cudaMalloc(&d_out, DIM * (DIM + 1) * sizeof(float));
@@ -418,9 +429,17 @@ void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Benchmarking
-    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaMemcpy(time, d_time, (DIM + 1) * DIM * sizeof(CLOCK_T), cudaMemcpyDeviceToHost);
     cudaFree(d_time);
-    std::cout << "Thread at position (24.5, 25) of velocity u advection took: " << time << "." << std::endl;
+    CLOCK_T total_time = 0;
+    for(int j = 0; j < DIM; j++){
+        for(int i = 0; i < DIM + 1; i++){
+            total_time += time[IDX(j, i, DIM + 1)];
+        }
+    }
+    CLOCK_T avg_time = total_time / ((DIM + 1) * DIM);
+    std::cout << "Vel u advection took: " << total_time << " --- Average per thread: " << avg_time << std::endl;
+    free(time);
 
     // Cleanup
     cudaFree(d_u);
