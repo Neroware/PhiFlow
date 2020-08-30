@@ -27,8 +27,7 @@ __device__ int pidx(int i, int j, int dim, int padding) {
  * v coefficients, u coefficients; Ranging from (j-2,i) to (j+2,i) and (i-2,j) to (i+2,j) respectivly
  * for properties centered on grid
  */
-__device__ float* coefficients(float vel1, float vel2) {
-    float* c = (float*) malloc(5 * sizeof(float));
+__device__ void coefficients(float* c, float vel1, float vel2) {
     c[0] = c[1] = c[2] = c[3] = c[4] = 0.0f;
 
     if (vel1 >= 0 and vel2 >= 0) {
@@ -58,14 +57,12 @@ __device__ float* coefficients(float vel1, float vel2) {
         c[3] = 0.75f * vel2;
         c[4] = -0.125f * vel1;
     }
-
-    return c;
 }
 
 
 /* =========================================== Density Advection =====================================*/
 
-__global__ void advectDensityQuick(float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectDensityQuick(unsigned long long* time, float* output_field, float* rho, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
@@ -73,13 +70,16 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
         return;
     }
 
+    unsigned long long start_time = CUDA_TIME;
+
     float delta_u_rho_delta_x, delta_v_rho_delta_y;
     delta_u_rho_delta_x = delta_v_rho_delta_y = 0.0f;
 
     float u1, u2;
     u1 = u[pidx(j, i, dim + 1, padding)];
     u2 = u[pidx(j, i + 1, dim + 1, padding)];
-    float* cs_u = coefficients(u1, u2);
+    float cs_u[5];
+    coefficients(cs_u, u1, u2);
 
     delta_u_rho_delta_x =
         cs_u[0] * rho[pidx(j, i - 2, dim, padding)] +
@@ -91,7 +91,8 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     float v1, v2;
     v1 = v[pidx(j, i, dim, padding)];
     v2 = v[pidx(j + 1, i, dim, padding)];
-    float* cs_v = coefficients(v1, v2);
+    float cs_v[5];
+    coefficients(cs_v, v1, v2);
 
     delta_v_rho_delta_y =
         cs_v[0] * rho[pidx(j - 2, i, dim, padding)] +
@@ -103,20 +104,24 @@ __global__ void advectDensityQuick(float* output_field, float* rho, float* u, fl
     float delta_rho_delta_t = -delta_u_rho_delta_x - delta_v_rho_delta_y;
     output_field[IDX(j, i, dim)] = rho[pidx(j, i, dim, padding)] + delta_rho_delta_t * dt;
 
-    free(cs_u);
-    free(cs_v);
+    unsigned long long finish_time = CUDA_TIME;
+    if(i == 25 && j == 25){
+        *time = finish_time - start_time;
+    }
 }
 
 
 /* ======================================= Velocity Advection =================================================== */
 
-__global__ void advectVelocityYQuick(float* output_field, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectVelocityYQuick(unsigned long long* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
     if (i >= dim || j >= dim + 1) {
         return;
     }
+
+    unsigned long long start_time = CUDA_TIME;
 
     float lerped_u1 = 0.5f * (u[pidx(j - 1, i, dim + 1, padding)] + u[pidx(j, i, dim + 1, padding)]);
     float lerped_u2 = 0.5f * (u[pidx(j, i, dim + 1, padding)] + u[pidx(j + 1, i, dim + 1, padding)]);
@@ -197,16 +202,23 @@ __global__ void advectVelocityYQuick(float* output_field, float* u, float* v, in
     float delta_v_v_delta_y = v4 * v4 - v3 * v3;
     float delta_v_delta_t = -delta_u_v_delta_x - delta_v_v_delta_y;
     output_field[IDX(j, i, dim)] = v[pidx(j, i, dim, padding)] + delta_v_delta_t * dt;
+
+    unsigned long long finish_time = CUDA_TIME;
+    if(i == 25 && j == 25){
+        *time = finish_time - start_time;
+    }
 }
 
 
-__global__ void advectVelocityXQuick(float* output_field, float* u, float* v, int dim, int padding, float dt) {
+__global__ void advectVelocityXQuick(unsigned long long* time, float* output_field, float* u, float* v, int dim, int padding, float dt) {
     int i = CUDA_THREAD_COL;
     int j = CUDA_THREAD_ROW;
 
     if (i >= dim + 1 || j >= dim) {
         return;
     }
+
+    unsigned long long start_time = CUDA_TIME;
 
     float lerped_v1 = 0.5f * (v[pidx(j, i - 1, dim, padding)] + v[pidx(j, i, dim, padding)]);
     float lerped_v2 = 0.5f * (v[pidx(j, i, dim, padding)] + v[pidx(j, i + 1, dim, padding)]);
@@ -287,6 +299,11 @@ __global__ void advectVelocityXQuick(float* output_field, float* u, float* v, in
     float delta_u_u_delta_x = u4 * u4 - u3 * u3;
     float delta_u_delta_t = -delta_u_u_delta_x - delta_v_u_delta_y;
     output_field[IDX(j, i, dim + 1)] = u[pidx(j, i, dim + 1, padding)] + delta_u_delta_t * dt;
+
+    unsigned long long finish_time = CUDA_TIME;
+    if(i == 25 && j == 25){
+        *time = finish_time - start_time;
+    }
 }
 
 
@@ -310,13 +327,23 @@ void LaunchQuickDensityKernel(float* output_field, const int dimensions, const i
     cudaMemcpy(d_u, u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
+    // Benchmarking
+    unsigned long long time;
+    unsigned long long* d_time;
+    cudaMalloc(&d_time, sizeof(unsigned long long));
+
     // Setup output pointer
     float* d_out;
     cudaMalloc(&d_out, DIM * DIM * sizeof(float));
 
     // Advect the field
-    advectDensityQuick CUDA_CALL(GRID, BLOCK) (d_out, d_rho, d_u, d_v, DIM, PADDING, DT);
+    advectDensityQuick CUDA_CALL(GRID, BLOCK) (d_time, d_out, d_rho, d_u, d_v, DIM, PADDING, DT);
     cudaMemcpy(output_field, d_out, DIM * DIM * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Benchmarking
+    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaFree(d_time);
+    std::cout << "Thread at position (25, 25) of scalar advection took: " << time << "." << std::endl;
 
     // Cleanup
     cudaFree(d_rho);
@@ -336,16 +363,26 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const
     const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
 
     // Setup Device Pointers for u and v
-    float* d_u, * d_v;
+    float *d_u, *d_v;
     cudaMalloc(&d_u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float));
     cudaMalloc(&d_v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float));
     cudaMemcpy(d_u, u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
+    // Benchmarking
+    unsigned long long time;
+    unsigned long long* d_time;
+    cudaMalloc(&d_time, sizeof(unsigned long long));
+
     float* d_out;
     cudaMalloc(&d_out, (DIM + 1) * DIM * sizeof(float));
-    advectVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out, d_u, d_v, DIM, PADDING, DT);
+    advectVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_time, d_out, d_u, d_v, DIM, PADDING, DT);
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Benchmarking
+    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaFree(d_time);
+    std::cout << "Thread at position (25, 24.5) of velocity v advection took: " << time << "." << std::endl;
 
     // Cleanup
     cudaFree(d_u);
@@ -364,16 +401,26 @@ void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const
     const dim3 GRID(BLOCK_ROW_COUNT, BLOCK_ROW_COUNT, 1);
 
     // Setup Device Pointers for u and v
-    float* d_u, * d_v;
+    float *d_u, *d_v;
     cudaMalloc(&d_u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float));
     cudaMalloc(&d_v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float));
     cudaMemcpy(d_u, u, (DIM + 2 * PADDING + 1) * (DIM + 2 * PADDING) * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_v, v, (DIM + 2 * PADDING) * (DIM + 2 * PADDING + 1) * sizeof(float), cudaMemcpyHostToDevice);
 
+    // Benchmarking
+    unsigned long long time;
+    unsigned long long* d_time;
+    cudaMalloc(&d_time, sizeof(unsigned long long));
+
     float* d_out;
     cudaMalloc(&d_out, DIM * (DIM + 1) * sizeof(float));
-    advectVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out, d_u, d_v, DIM, PADDING, DT);
+    advectVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_time, d_out, d_u, d_v, DIM, PADDING, DT);
     cudaMemcpy(output_field, d_out, (DIM + 1) * DIM * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Benchmarking
+    cudaMemcpy(&time, d_time, sizeof(unsigned long long), cudaMemcpyDeviceToHost);
+    cudaFree(d_time);
+    std::cout << "Thread at position (24.5, 25) of velocity u advection took: " << time << "." << std::endl;
 
     // Cleanup
     cudaFree(d_u);
