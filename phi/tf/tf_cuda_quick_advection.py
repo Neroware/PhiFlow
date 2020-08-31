@@ -65,3 +65,8 @@ def _tf_cuda_quick_advection_grad(op, grad):
 def tf_cuda_quick_density_gradients(density, density_padded, vel_u, vel_v, dt, dim):
     rho_adv = quick_op.quick_advection(density, density_padded, vel_u, vel_v, dim, 2, dt, 0, 0)
     return tf.gradients(rho_adv, [density_padded, vel_u, vel_v])
+
+
+def tf_cuda_quick_density_gradients_to_loss(density, density_padded, vel_u, vel_v, dt, dim, loss):
+    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(density, density_padded, vel_u, vel_v, loss, dim, 2, dt)
+    return [grad_rho, grad_u, grad_v]
