@@ -39,7 +39,7 @@ class CUDAFlow(App):
         #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
 
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:200, 0:200], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         #fluid.density = self._get_density_grid_2()
         fluid.density = self._get_density_grid()
