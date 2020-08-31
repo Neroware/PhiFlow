@@ -230,13 +230,13 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
         cs_u2[4] * rho[pidx(j, i + 2, dim, padding)];
 
     if(i == 0){
-        output_field[pidx(j, i, dim + 1, padding)] = grad_2 * grad[IDX(j, i, dim)];
+        output_field[pidx(j, i, dim + 1, padding)] = -grad_2 * grad[IDX(j, i, dim)] * dt;
     }
     else if(i == dim){
-        output_field[pidx(j, i, dim + 1, padding)] = grad_1 * grad[IDX(j, i - 1, dim)];
+        output_field[pidx(j, i, dim + 1, padding)] = -grad_1 * grad[IDX(j, i - 1, dim)] * dt;
     }
     else{
-        output_field[pidx(j, i, dim + 1, padding)] = grad_1 * grad[IDX(j, i - 1, dim)] + grad_2 * grad[IDX(j, i, dim)];
+        output_field[pidx(j, i, dim + 1, padding)] = -grad_1 * grad[IDX(j, i - 1, dim)] * dt - grad_2 * grad[IDX(j, i, dim)] * dt;
     }
 }
 
@@ -274,13 +274,13 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
         cs_v2[4] * rho[pidx(j + 2, i, dim, padding)];
 
     if(j == 0){
-        output_field[pidx(j, i, dim, padding)] = grad_2 * grad[IDX(j, i, dim)];
+        output_field[pidx(j, i, dim, padding)] = -grad_2 * grad[IDX(j, i, dim)] * dt;
     }
     else if(j == dim){
-        output_field[pidx(j, i, dim, padding)] = grad_1 * grad[IDX(j - 1, i, dim)];
+        output_field[pidx(j, i, dim, padding)] = -grad_1 * grad[IDX(j - 1, i, dim)] * dt;
     }
     else{
-        output_field[pidx(j, i, dim, padding)] = grad_1 * grad[IDX(j - 1, i, dim)] + grad_2 * grad[IDX(j, i, dim)];
+        output_field[pidx(j, i, dim, padding)] = -grad_1 * grad[IDX(j - 1, i, dim)] * dt - grad_2 * grad[IDX(j, i, dim)] * dt;
     }
 }
 
