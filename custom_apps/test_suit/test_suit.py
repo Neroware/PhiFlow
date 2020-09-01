@@ -946,7 +946,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        if(x <= 32):
+        if(x <= 20):
             next.append([0.0, 0.2])
         else:
             next.append([0.0, 0.0])
