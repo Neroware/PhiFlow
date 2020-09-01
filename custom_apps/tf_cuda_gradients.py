@@ -70,6 +70,8 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
         dim = RESOLUTION[0]
+        # Do the Machine Learning
+        self._do_the_machine_learning_stuff(density, velocity, dt, dim)
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
         density_tensor_padded = tf.constant(density.padded(2).data)
@@ -83,16 +85,16 @@ class CUDAFlow(App):
         vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
         vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
         # Get target field
-        den_target = tf.constant(self._get_target_field().data)
-        den_diff = den_target - den
+        #den_target = tf.constant(self._get_target_field().data)
+        #den_diff = den_target - den
         # Generate gradient matrix
-        grad_rho, grad_u, grad_v = tf_cuda_quick_density_gradients_to_loss(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, den_diff)
+        #grad_rho, grad_u, grad_v = tf_cuda_quick_density_gradients_to_loss(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, den_diff)
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
             self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
-            plot_grid(grad_rho.eval()[0], "tf_cuda_grad_rho.jpg", -0.0001, 0.0001)
-            plot_grid(grad_u.eval()[0], "tf_cuda_grad_u.jpg", -0.0001, 0.0001)
-            plot_grid(grad_v.eval()[0], "tf_cuda_grad_v.jpg", -0.0001, 0.0001)
+            #plot_grid(grad_rho.eval()[0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.0001, 0.0001)
+            #plot_grid(grad_u.eval()[0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.0001, 0.0001)
+            #plot_grid(grad_v.eval()[0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.0001, 0.0001)
             sess.close()
         world.step(dt=self.timestep)
         
@@ -100,6 +102,33 @@ class CUDAFlow(App):
     def action_reset(self):
         self.steps = 0
         self.fluid.density = self.fluid.velocity = 0
+
+
+    def _do_the_machine_learning_stuff(self, density, velocity, dt, dim):
+        density_tensor = tf.Variable(density.data)
+        density_tensor_padded = tf.Variable(density.padded(2).data)
+        velocity_v_field, velocity_u_field = velocity.data
+        velocity_v_tensor = tf.Variable(velocity_v_field.data)
+        velocity_u_tensor = tf.Variable(velocity_u_field.data)
+        velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
+        velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
+        target = tf.constant(self._get_target_field().data)
+        rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
+        y = rho_adv - target
+        optimizer = tf.train.GradientDescentOptimizer(0.1)
+        print("(i) Created optimizer: ", optimizer)
+        train = optimizer.minimize(y)
+        print("Got training results:\n ", train)
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        sess.run(train)
+        result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
+        plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
+        plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
+        plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_diff.jpg", -0.4, 0.4)
+        print(result)
+        print("=====================================")
 
 
     def _get_velocity_grid(self):
