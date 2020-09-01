@@ -118,7 +118,7 @@ class CUDAFlow(App):
         return StaggeredGrid(velocity_grid)
 
 
-    def _get_density_grid(self):
+    def _get_target_field(self):
         data = []
         for y in range(0, RESOLUTION[0]):
             next = []
@@ -129,7 +129,7 @@ class CUDAFlow(App):
         return CenteredGrid(density_array)
 
 
-    def _get_target_field(self):
+    def _get_density_grid(self):
         data = []
         for y in range(0, RESOLUTION[0]):
             next = []
