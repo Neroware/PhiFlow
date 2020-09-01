@@ -111,7 +111,8 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
                 dim = RESOLUTION[0]
-                next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
+                #next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
+                next.append([0.1 * math.sin((1.0 / dim) * PI * y), 0.1 * math.sin((1.0 / dim) * PI * x)])
 
             data.append(next)
         velocity_grid = np.array([data], dtype="float32")
