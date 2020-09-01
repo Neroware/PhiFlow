@@ -105,7 +105,6 @@ class CUDAFlow(App):
 
 
     def _do_the_machine_learning_stuff(self, density, velocity, dt, dim):
-        dt = 100.0
         density_tensor = tf.Variable(density.data)
         density_tensor_padded = tf.Variable(density.padded(2).data)
         velocity_v_field, velocity_u_field = velocity.data
@@ -118,7 +117,7 @@ class CUDAFlow(App):
         y = rho_adv - target
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         print("(i) Created optimizer: ", optimizer)
-        train = optimizer.minimize(y, grad_loss=y)
+        train = optimizer.minimize(y)
         print("Got training results:\n ", train)
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
