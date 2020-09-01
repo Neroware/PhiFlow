@@ -10,6 +10,9 @@ from phi.tf.app import App
 from phi.tf.tf_cuda_quick_advection import *
 
 import math
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
 PI = 3.14159
 
 
@@ -29,6 +32,24 @@ def to_staggered_grid(data_x, data_y, dim):
         for i in range(0, dim):
             result_data[j][i][0] = data_y[j][i]
     return StaggeredGrid(np.array([result_data], dtype="float32"))
+
+
+def plot_grid(data, path, min_value, max_value):
+    img = []
+    for row in data:
+        next = []
+        for col in row:
+            next.append(col[0])
+        img.append(next)
+    viridis = cm.get_cmap("viridis", 256)
+    cms = [viridis]
+    fig, axs = plt.subplots(1, 1, figsize=(8, 6), constrained_layout=True)
+    for [ax, cmap] in zip([axs], cms):
+        psm = ax.pcolormesh(img, cmap=cmap, rasterized=True, vmin=min_value, vmax=max_value)
+        fig.colorbar(psm, ax=ax)
+    fig.savefig(path)
+    plt.close()
+ 
 
 
 class CUDAFlow(App):
@@ -62,13 +83,16 @@ class CUDAFlow(App):
         vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
         vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
         # Get target field
-        den_target = self._get_target_field()
+        den_target = tf.constant(self._get_target_field().data)
         den_diff = den_target - den
         # Generate gradient matrix
         grad_rho, grad_u, grad_v = tf_cuda_quick_density_gradients_to_loss(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, den_diff)
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
             self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
+            plot_grid(grad_rho.eval()[0], "tf_cuda_grad_rho.jpg", -0.0001, 0.0001)
+            plot_grid(grad_u.eval()[0], "tf_cuda_grad_u.jpg", -0.0001, 0.0001)
+            plot_grid(grad_v.eval()[0], "tf_cuda_grad_v.jpg", -0.0001, 0.0001)
             sess.close()
         world.step(dt=self.timestep)
         
