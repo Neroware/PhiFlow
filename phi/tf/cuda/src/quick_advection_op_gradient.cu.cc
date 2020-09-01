@@ -280,7 +280,8 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
         output_field[pidx(j, i, dim, padding)] = -grad_1 * grad[IDX(j - 1, i, dim)] * dt;
     }
     else{
-        output_field[pidx(j, i, dim, padding)] = -grad_1 * grad[IDX(j - 1, i, dim)] * dt - grad_2 * grad[IDX(j, i, dim)] * dt;
+        //output_field[pidx(j, i, dim, padding)] = -grad_1 * grad[IDX(j - 1, i, dim)] * dt - grad_2 * grad[IDX(j, i, dim)] * dt;
+        output_field[pidx(j, i, dim, padding)] = 0.1f * (i + j);
     }
 }
 
