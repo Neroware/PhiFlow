@@ -73,8 +73,8 @@ class CUDAFlow(App):
         dim = RESOLUTION[0]
 
         # Do the Machine Learning
-        self._gradient_decent_quick(density, velocity, dt, dim)
-        #self._gradient_decent_semi_lagrange(density, velocity, dt)
+        self._gradient_descent_quick(density, velocity, dt, dim)
+        #self._gradient_descent_semi_lagrange(density, velocity, dt)
 
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
@@ -100,7 +100,7 @@ class CUDAFlow(App):
         self.fluid.density = self.fluid.velocity = 0
 
 
-    def _gradient_decent_semi_lagrange(self, density, velocity, dt):
+    def _gradient_descent_semi_lagrange(self, density, velocity, dt):
         density_tensor = tf.Variable(density.data)
         density_field = CenteredGrid(density_tensor)
         velocity_v_field, velocity_u_field = velocity.data
@@ -128,7 +128,7 @@ class CUDAFlow(App):
         print("=====================================")
 
 
-    def _gradient_decent_quick(self, density, velocity, dt, dim):
+    def _gradient_descent_quick(self, density, velocity, dt, dim):
         density_tensor = tf.Variable(density.data)
         density_tensor_padded = tf.Variable(density.padded(2).data)
         velocity_v_field, velocity_u_field = velocity.data
@@ -141,7 +141,7 @@ class CUDAFlow(App):
         y = rho_adv - target
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         print("(i) Created optimizer: ", optimizer)
-        train = optimizer.minimize(y)
+        train = optimizer.minimize(y, grad_loss=y)
         print("Got training results:\n ", train)
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
