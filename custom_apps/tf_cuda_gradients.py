@@ -101,42 +101,35 @@ class CUDAFlow(App):
 
 
     def _gradient_descent_semi_lagrange(self, density, velocity, dt):
-        density_tensor = tf.constant(density.data)
+        density_tensor = tf.Variable(density.data)
         density_field = CenteredGrid(density_tensor)
         velocity_v_field, velocity_u_field = velocity.data
-        velocity_v_tensor = tf.constant(velocity_v_field.data)
-        velocity_u_tensor = tf.constant(velocity_u_field.data)
+        velocity_v_tensor = tf.Variable(velocity_v_field.data)
+        velocity_u_tensor = tf.Variable(velocity_u_field.data)
         target_field = tf.constant(self._get_target_field().data)
         velocity_field = StaggeredGrid((velocity_v_tensor, velocity_u_tensor))
-
-        rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
-        grds = tf.gradients(rho_adv, [density_tensor, velocity_v_tensor, velocity_u_tensor])
-        
-        with tf.Session("") as sess:
-            plot_grid(grds[0].eval()[0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
-            plot_grid(grds[1].eval()[0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
-            plot_grid(grds[2].eval()[0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        print("Grds: ", grds)
-        print("=============================")
-
+        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.4, 0.4)
+        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.4, 0.4)
+        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.4, 0.4)
+        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.4, 0.4)
         # Computation
-        #rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
-        #y = target_field - rho_adv
+        rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
+        y = target_field - rho_adv
         # Create Optimizer
-        #optimizer = tf.train.GradientDescentOptimizer(0.1)
-        #train = optimizer.minimize(y)
-        #print("Got training results:\n ", train)
+        optimizer = tf.train.GradientDescentOptimizer(0.1)
+        train = optimizer.minimize(y)
+        print("Got training results:\n ", train)
         # Evaluate
-        #sess = tf.Session()
-        #sess.run(tf.global_variables_initializer())
-        #sess.run(train)
-        #result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, y))
-        #plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
-        #plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
-        #plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        #plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_diff.jpg", -0.4, 0.4)
-        #print(result)
-        #print("=====================================")
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        sess.run(train)
+        result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, y))
+        plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
+        plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
+        plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_y.jpg", -0.4, 0.4)
+        print(result)
+        print("=====================================")
 
 
     def _gradient_descent_quick(self, density, velocity, dt, dim):
@@ -148,12 +141,19 @@ class CUDAFlow(App):
         velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
         target = tf.constant(self._get_target_field().data)
+        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.4, 0.4)
+        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.4, 0.4)
+        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.4, 0.4)
+        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.4, 0.4)
+        # Computation
         rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         y = target - rho_adv
+        # Create Optimizer
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         print("(i) Created optimizer: ", optimizer)
         train = optimizer.minimize(y, grad_loss=y)
         print("Got training results:\n ", train)
+        # Evaluate
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         sess.run(train)
