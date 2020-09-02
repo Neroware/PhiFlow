@@ -73,8 +73,8 @@ class CUDAFlow(App):
         dim = RESOLUTION[0]
 
         # Do the Machine Learning
-        self._gradient_descent_quick(density, velocity, dt, dim)
-        #self._gradient_descent_semi_lagrange(density, velocity, dt)
+        #self._gradient_descent_quick(density, velocity, dt, dim)
+        self._gradient_descent_semi_lagrange(density, velocity, dt)
 
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
@@ -110,7 +110,7 @@ class CUDAFlow(App):
         velocity_field = StaggeredGrid((velocity_v_tensor, velocity_u_tensor))
         # Computation
         rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
-        y = rho_adv - target_field
+        y = target_field - rho_adv
         # Create Optimizer
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         train = optimizer.minimize(y)
@@ -138,7 +138,7 @@ class CUDAFlow(App):
         velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
         target = tf.constant(self._get_target_field().data)
         rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-        y = rho_adv - target
+        y = target - rho_adv
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         print("(i) Created optimizer: ", optimizer)
         train = optimizer.minimize(y, grad_loss=y)
