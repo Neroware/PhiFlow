@@ -73,8 +73,8 @@ class CUDAFlow(App):
         dim = RESOLUTION[0]
 
         # Do the Machine Learning
-        #self._gradient_descent_quick(density, velocity, dt, dim)
-        self._gradient_descent_semi_lagrange(density, velocity, dt)
+        self._gradient_descent_quick(density, velocity, dt, dim)
+        #self._gradient_descent_semi_lagrange(density, velocity, dt)
 
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
