@@ -8,6 +8,7 @@ DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
 from phi.tf.app import App
 from phi.tf.tf_cuda_quick_advection import *
+from phi.physics.field.advect import *
 
 import math
 import matplotlib.pyplot as plt
@@ -58,7 +59,7 @@ class CUDAFlow(App):
         self.physics = SimpleFlowPhysics()
         #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
-        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
+        fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:8, 0:8], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid()
         self.add_field('Velocity', lambda: fluid.velocity)
@@ -70,8 +71,11 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
         dim = RESOLUTION[0]
+
         # Do the Machine Learning
-        self._do_the_machine_learning_stuff(density, velocity, dt, dim)
+        #self._gradient_decent_quick(density, velocity, dt, dim)
+        self._gradient_decent_semi_lagrange(density, velocity, dt)
+
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
         density_tensor_padded = tf.constant(density.padded(2).data)
@@ -84,17 +88,9 @@ class CUDAFlow(App):
         den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
         vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
-        # Get target field
-        #den_target = tf.constant(self._get_target_field().data)
-        #den_diff = den_target - den
-        # Generate gradient matrix
-        #grad_rho, grad_u, grad_v = tf_cuda_quick_density_gradients_to_loss(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, den_diff)
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
             self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
-            #plot_grid(grad_rho.eval()[0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.0001, 0.0001)
-            #plot_grid(grad_u.eval()[0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.0001, 0.0001)
-            #plot_grid(grad_v.eval()[0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.0001, 0.0001)
             sess.close()
         world.step(dt=self.timestep)
         
@@ -104,31 +100,60 @@ class CUDAFlow(App):
         self.fluid.density = self.fluid.velocity = 0
 
 
-    def _do_the_machine_learning_stuff(self, density, velocity, dt, dim):
+    def _gradient_decent_semi_lagrange(self, density, velocity, dt):
         density_tensor = tf.Variable(density.data)
-        density_tensor_padded = tf.Variable(density.padded(2).data)
+        density_field = CenteredGrid(density_tensor)
         velocity_v_field, velocity_u_field = velocity.data
         velocity_v_tensor = tf.Variable(velocity_v_field.data)
         velocity_u_tensor = tf.Variable(velocity_u_field.data)
-        velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
-        velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
-        target = tf.constant(self._get_target_field().data)
-        rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-        y = rho_adv - target
+        target_field = tf.constant(self._get_target_field().data)
+        velocity_field = StaggeredGrid((velocity_v_tensor, velocity_u_tensor))
+        # Computation
+        rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
+        y = rho_adv - target_field
+        # Create Optimizer
         optimizer = tf.train.GradientDescentOptimizer(0.1)
-        print("(i) Created optimizer: ", optimizer)
         train = optimizer.minimize(y)
         print("Got training results:\n ", train)
+        # Evaluate
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         sess.run(train)
-        result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
+        result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, y))
         plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
         plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
         plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
         plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_diff.jpg", -0.4, 0.4)
         print(result)
         print("=====================================")
+
+
+    def _gradient_decent_quick(self, density, velocity, dt, dim):
+        pass
+        #density_tensor = tf.Variable(density.data)
+        #density_tensor_padded = tf.Variable(density.padded(2).data)
+        #velocity_v_field, velocity_u_field = velocity.data
+        #velocity_v_tensor = tf.Variable(velocity_v_field.data)
+        #velocity_u_tensor = tf.Variable(velocity_u_field.data)
+        #velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
+        #velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
+        #target = tf.constant(self._get_target_field().data)
+        #rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
+        #y = rho_adv - target
+        #optimizer = tf.train.GradientDescentOptimizer(0.1)
+        #print("(i) Created optimizer: ", optimizer)
+        #train = optimizer.minimize(y)
+        #print("Got training results:\n ", train)
+        #sess = tf.Session()
+        #sess.run(tf.global_variables_initializer())
+        #sess.run(train)
+        #result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
+        #plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
+        #plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
+        #plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
+        #plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_diff.jpg", -0.4, 0.4)
+        #print(result)
+        #print("=====================================")
 
 
     def _get_velocity_grid(self):
@@ -141,7 +166,8 @@ class CUDAFlow(App):
             for x in range(0, RESOLUTION[0] + 1):
                 dim = RESOLUTION[0]
                 #next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
-                next.append([0.1 * math.sin((1.0 / dim) * PI * y), 0.1 * math.sin((1.0 / dim) * PI * x)])
+                #next.append([0.1 * math.sin((1.0 / dim) * PI * y), 0.1 * math.sin((1.0 / dim) * PI * x)])
+                next.append([0.1, 0.1])
 
             data.append(next)
         velocity_grid = np.array([data], dtype="float32")
@@ -153,7 +179,10 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0]):
             next = []
             for x in range(0, RESOLUTION[0]):
-                next.append([0.2])
+                if((x == 2 or x == 3) and (y == 2 or y == 3)):
+                    next.append([0.1])
+                else:
+                    next.append([0.0])
             data.append(next)
         density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
@@ -164,7 +193,10 @@ class CUDAFlow(App):
         for y in range(0, RESOLUTION[0]):
             next = []
             for x in range(0, RESOLUTION[0]):
-                next.append([0.2 * (x / 100.0)])
+                if((x == 3 or x == 4) and (y == 3 or y == 4)):
+                    next.append([0.1])
+                else:
+                    next.append([0.0])
             data.append(next)
         density_array = np.array([data], dtype="float32")
         return CenteredGrid(density_array)
