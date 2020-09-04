@@ -55,7 +55,7 @@ __device__ void coefficients(float* c, float vel1, float vel2) {
         c[1] = -0.75f * vel1;
         c[2] = 0.375f * vel2 - 0.375 * vel1;
         c[3] = 0.75f * vel2;
-        c[4] = -0.125f * vel1;
+        c[4] = -0.125f * vel2;
     }
 }
 

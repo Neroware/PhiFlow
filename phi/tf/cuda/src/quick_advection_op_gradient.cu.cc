@@ -55,7 +55,7 @@ __device__ void coefficients(float* c, float vel1, float vel2) {
         c[1] = -0.75f * vel1;
         c[2] = 0.375f * vel2 - 0.375 * vel1;
         c[3] = 0.75f * vel2;
-        c[4] = -0.125f * vel1;
+        c[4] = -0.125f * vel2;
     }
 }
 
@@ -85,8 +85,6 @@ __device__ void coefficients_derivative_1(float* c, float vel1, float vel2) {
         c[0] = 0.125f;
         c[1] = -0.75f;
         c[2] = -0.375;
-        c[3] = 0.0f;
-        c[4] = -0.125f;
     }
 }
 
@@ -115,6 +113,7 @@ __device__ void coefficients_derivative_2(float* c, float vel1, float vel2) {
     else{
         c[2] = 0.375f;
         c[3] = 0.75f;
+        c[4] = -0.125f;
     }
 }
 
@@ -126,8 +125,6 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
     if (i >= dim || j >= dim) {
         return;
     }
-
-    dt *= 100.0f;
 
     float u1, u2, u3, u4, u5, u6;
     u1 = u[pidx(j, i - 2, dim + 1, padding)];
