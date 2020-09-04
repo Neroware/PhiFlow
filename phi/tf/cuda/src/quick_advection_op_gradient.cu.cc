@@ -127,7 +127,7 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
         return;
     }
 
-    dt *= 10.0f;
+    dt *= 1000.0f;
 
     float u1, u2, u3, u4, u5, u6;
     u1 = u[pidx(j, i - 2, dim + 1, padding)];
