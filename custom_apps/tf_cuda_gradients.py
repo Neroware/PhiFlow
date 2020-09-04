@@ -141,10 +141,10 @@ class CUDAFlow(App):
         velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
         target = tf.constant(self._get_target_field().data)
-        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.4, 0.4)
-        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.4, 0.4)
-        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.4, 0.4)
-        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.4, 0.4)
+        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.2, 0.2)
+        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.2, 0.2)
+        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.2, 0.2)
+        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.2, 0.2)
         # Computation
         rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         y = target - rho_adv
