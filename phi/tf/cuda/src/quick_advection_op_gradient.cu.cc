@@ -185,7 +185,7 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
     if (j < dim - 2)
         g[8] = grad[IDX(j + 2, i, dim)];
 
-    output_field[pidx(j, i, dim, padding)] = g[2] * -(cs_u3[2] * dt + cs_v3[2] * dt) +
+    output_field[pidx(j, i, dim, padding)] = g[2] + g[2] * -(cs_u3[2] * dt + cs_v3[2] * dt) +
         g[0] * -(cs_u1[4] * dt) +
         g[1] * -(cs_u2[3] * dt) +
         g[3] * -(cs_u4[1] * dt) +
