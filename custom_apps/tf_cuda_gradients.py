@@ -74,7 +74,7 @@ class CUDAFlow(App):
 
         # Do the Machine Learning
         self._gradient_descent_quick(density, velocity, dt, dim)
-        #self._gradient_descent_semi_lagrange(density, velocity, dt)
+        self._gradient_descent_semi_lagrange(density, velocity, dt)
 
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
@@ -108,10 +108,10 @@ class CUDAFlow(App):
         velocity_u_tensor = tf.Variable(velocity_u_field.data)
         target_field = tf.constant(self._get_target_field().data)
         velocity_field = StaggeredGrid((velocity_v_tensor, velocity_u_tensor))
-        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.4, 0.4)
-        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.4, 0.4)
-        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.4, 0.4)
-        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.4, 0.4)
+        plot_grid(density.data[0], "tf_cuda_grad/sl/tf_cuda_init_rho.jpg", -0.4, 0.4)
+        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/sl/tf_cuda_init_v.jpg", -0.4, 0.4)
+        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/sl/tf_cuda_init_u.jpg", -0.4, 0.4)
+        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/sl/tf_cuda_target.jpg", -0.4, 0.4)
         # Computation
         rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
         y = target_field - rho_adv
@@ -124,10 +124,10 @@ class CUDAFlow(App):
         sess.run(tf.global_variables_initializer())
         sess.run(train)
         result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, y))
-        plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.4, 0.4)
-        plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
-        plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_y.jpg", -0.4, 0.4)
+        plot_grid(result[0][0], "tf_cuda_grad/sl/tf_cuda_grad_rho.jpg", -0.4, 0.4)
+        plot_grid(result[1][0], "tf_cuda_grad/sl/tf_cuda_grad_u.jpg", -0.4, 0.4)
+        plot_grid(result[2][0], "tf_cuda_grad/sl/tf_cuda_grad_v.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/sl/tf_cuda_grad_y.jpg", -0.4, 0.4)
         print(result)
         print("=====================================")
 
@@ -141,27 +141,27 @@ class CUDAFlow(App):
         velocity_v_tensor_padded = tf.Variable(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.Variable(velocity_u_field.padded(2).data)
         target = tf.constant(self._get_target_field().data)
-        plot_grid(density.data[0], "tf_cuda_grad/tf_cuda_init_rho.jpg", -0.4, 0.4)
-        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/tf_cuda_init_v.jpg", -0.4, 0.4)
-        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/tf_cuda_init_u.jpg", -0.4, 0.4)
-        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/tf_cuda_target.jpg", -0.4, 0.4)
+        plot_grid(density.data[0], "tf_cuda_grad/quick/tf_cuda_init_rho.jpg", -0.4, 0.4)
+        plot_grid(velocity_v_field.data[0], "tf_cuda_grad/quick/tf_cuda_init_v.jpg", -0.4, 0.4)
+        plot_grid(velocity_u_field.data[0], "tf_cuda_grad/quick/tf_cuda_init_u.jpg", -0.4, 0.4)
+        plot_grid(self._get_target_field().data[0], "tf_cuda_grad/quick/tf_cuda_target.jpg", -0.4, 0.4)
         # Computation
         rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
         y = target - rho_adv
         # Create Optimizer
         optimizer = tf.train.GradientDescentOptimizer(0.1)
         print("(i) Created optimizer: ", optimizer)
-        train = optimizer.minimize(y, grad_loss=y)
+        train = optimizer.minimize(y)
         print("Got training results:\n ", train)
         # Evaluate
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         sess.run(train)
         result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
-        plot_grid(result[0][0], "tf_cuda_grad/tf_cuda_grad_rho.jpg", -0.2, 0.2)
-        plot_grid(result[1][0], "tf_cuda_grad/tf_cuda_grad_u.jpg", -0.4, 0.4)
-        plot_grid(result[2][0], "tf_cuda_grad/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        plot_grid(result[3][0], "tf_cuda_grad/tf_cuda_grad_diff.jpg", -0.4, 0.4)
+        plot_grid(result[0][0], "tf_cuda_grad/quick/tf_cuda_grad_rho.jpg", -0.2, 0.2)
+        plot_grid(result[1][0], "tf_cuda_grad/quick/tf_cuda_grad_u.jpg", -0.4, 0.4)
+        plot_grid(result[2][0], "tf_cuda_grad/quick/tf_cuda_grad_v.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/quick/tf_cuda_grad_diff.jpg", -0.4, 0.4)
         print(result)
         print("=====================================")
 
