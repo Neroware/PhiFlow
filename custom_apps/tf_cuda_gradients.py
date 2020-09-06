@@ -74,7 +74,7 @@ class CUDAFlow(App):
 
         # Do the Machine Learning
         self._gradient_descent_quick(density, velocity, dt, dim)
-        #self._gradient_descent_semi_lagrange(density, velocity, dt)
+        self._gradient_descent_semi_lagrange(density, velocity, dt)
 
         # This is ugly but I but since this is siumlation code it's not too bad
         density_tensor = tf.constant(density.data)
@@ -158,7 +158,7 @@ class CUDAFlow(App):
         sess.run(tf.global_variables_initializer())
         sess.run(train)
         result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
-        plot_grid(result[0][0], "tf_cuda_grad/quick/tf_cuda_grad_rho.jpg", -0.2, 0.2)
+        plot_grid(result[0][0], "tf_cuda_grad/quick/tf_cuda_grad_rho.jpg", -0.4, 0.4)
         plot_grid(result[1][0], "tf_cuda_grad/quick/tf_cuda_grad_u.jpg", -0.4, 0.4)
         plot_grid(result[2][0], "tf_cuda_grad/quick/tf_cuda_grad_v.jpg", -0.4, 0.4)
         plot_grid(result[3][0], "tf_cuda_grad/quick/tf_cuda_grad_diff.jpg", -0.4, 0.4)
