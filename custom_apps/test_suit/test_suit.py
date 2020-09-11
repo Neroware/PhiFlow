@@ -981,7 +981,7 @@ data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
     for x in range(0, RESOLUTION[0] + 1):
-        u = 0.2 * EXP0 ** -((2*(0.03125*x-1))**2) + 0.1 * EXP0 ** -((2*(0.03125*(x-12)-1))**2)
+        u = 0.2 * EXP0 ** -((2*(0.0625*x-1))**2) + 0.1 * EXP0 ** -((2*(0.0625*(x-18)-1))**2)
         next.append([0.0, u])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
