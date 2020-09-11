@@ -17,3 +17,4 @@ rm -r Vel_X_Only/*
 rm -r Vel_Y_Only/*
 rm -r Burgers_1/*
 rm -r Discont_X/*
+rm -r WaveChase/*
