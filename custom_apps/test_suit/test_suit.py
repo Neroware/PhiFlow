@@ -36,20 +36,20 @@ if not 'quick' in sys.argv:
 DT = 0.1
 
 
-def to_staggered_grid(data_x, data_y, dim):
+def to_staggered_grid(data_x, data_y, dim_x, dim_y):
     result_data = []
-    for j in range(0, dim + 1):
+    for j in range(0, dim_y + 1):
         next = []
-        for i in range(0, dim + 1):
+        for i in range(0, dim_x + 1):
             next.append([None, None])
         result_data.append(next)
     # X-Components (i+0.5,j)
-    for j in range(0, dim):
-        for i in range(0, dim + 1):
+    for j in range(0, dim_y):
+        for i in range(0, dim_x + 1):
             result_data[j][i][1] = data_x[j][i]
     # Y-Components (i,j+0.5)
-    for j in range(0, dim + 1):
-        for i in range(0, dim):
+    for j in range(0, dim_y + 1):
+        for i in range(0, dim_x):
             result_data[j][i][0] = data_y[j][i]
     return StaggeredGrid(np.array([result_data], dtype="float32"))
 
@@ -76,7 +76,8 @@ class TestCase:
             except:
                 density = self.density_field
             dt = self.timestep
-            dim = RESOLUTION[0]
+            dim_x = RESOLUTION[0]
+            dim_y = RESOLUTION[1]
             tf.compat.v1.reset_default_graph()
         
             density_tensor = tf.constant(density.data)
@@ -88,7 +89,7 @@ class TestCase:
             velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
             with tf.Session("") as sess:
-                grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
+                grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0)
                 plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad" + filename_postfix + ".jpg", -0.04, 0.04)
                 plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad" + filename_postfix + ".jpg", -0.04, 0.04)
                 plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad" + filename_postfix + ".jpg", -0.04, 0.04)
@@ -106,7 +107,8 @@ class TestCase:
             except:
                 density = self.density_field
             dt = self.timestep
-            dim = RESOLUTION[0]
+            dim_x = RESOLUTION[0]
+            dim_y = RESOLUTION[1]
             tf.compat.v1.reset_default_graph()
 
             density_tensor = tf.constant(density.data)
@@ -117,13 +119,13 @@ class TestCase:
             velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
             velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
-            den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-            vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
-            vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
+            den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="density")
+            vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="velocity_u")
+            vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="velocity_v")
 
             with tf.Session("") as sess:
                 self.density_field = CenteredGrid(den.eval())
-                self.velocity_field = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
+                self.velocity_field = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim_x, dim_y)
                 sess.close()
 
         else:

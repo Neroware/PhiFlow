@@ -34,7 +34,7 @@ void LaunchQuickVelocityYKernel(float* output_field, const int dim_x, const int 
 class QuickAdvectionOp : public OpKernel {
 private:
     int dim_x, dim_y;
-    float delta_x, delta_y
+    float delta_x, delta_y;
     float timestep;
     int field_type;
     int step_type;

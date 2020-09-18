@@ -171,17 +171,17 @@ __global__ void gradientFieldQuick(float* output_field, float* rho, float* u, fl
         g[0] = grad[IDX(j, i - 2, dim_x)];
     if (i > 0)
         g[1] = grad[IDX(j, i - 1, dim_x)];
-    if(i < dim - 1)
+    if(i < dim_x - 1)
         g[3] = grad[IDX(j, i + 1, dim_x)];
-    if (i < dim - 2)
+    if (i < dim_x - 2)
         g[4] = grad[IDX(j, i + 2, dim_x)];
     if (j > 1)
         g[5] = grad[IDX(j - 2, i, dim_x)];
     if (j > 0)
         g[6] = grad[IDX(j - 1, i, dim_x)];
-    if (j < dim - 1)
+    if (j < dim_y - 1)
         g[7] = grad[IDX(j + 1, i, dim_x)];
-    if (j < dim - 2)
+    if (j < dim_y - 2)
         g[8] = grad[IDX(j + 2, i, dim_x)];
 
     float unit_x = 1.0f / delta_x;
@@ -236,7 +236,7 @@ __global__ void gradientVelocityXQuick(float* output_field, float* rho, float* u
     if(i == 0){
         output_field[pidx(j, i, dim_x + 1, padding)] = -grad_2 * grad[IDX(j, i, dim_x)] * dt;
     }
-    else if(i == dim){
+    else if(i == dim_x){
         output_field[pidx(j, i, dim_x + 1, padding)] = -grad_1 * grad[IDX(j, i - 1, dim_x)] * dt;
     }
     else{
@@ -282,7 +282,7 @@ __global__ void gradientVelocityYQuick(float* output_field, float* rho, float* u
     if(j == 0){
         output_field[pidx(j, i, dim_x, padding)] = -grad_2 * grad[IDX(j, i, dim_x)] * dt;
     }
-    else if(j == dim){
+    else if(j == dim_y){
         output_field[pidx(j, i, dim_x, padding)] = -grad_1 * grad[IDX(j - 1, i, dim_x)] * dt;
     }
     else{
@@ -326,10 +326,10 @@ void LaunchQUICKAdvectionScalarGradientKernel(float* output_grds, float* vel_u_g
     gradientFieldQuick CUDA_CALL(GRID, BLOCK) (d_out_field, d_rho, d_u, d_v, d_grad, DIM_X, DIM_Y, DELTA_X, DELTA_Y, PADDING, DT);
     cudaMemcpy(output_grds, d_out_field, (DIM_X + 2 * PADDING) * (DIM_Y + 2 * PADDING) * sizeof(float), cudaMemcpyDeviceToHost);
 
-    gradientVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out_u, d_rho, d_u, d_v, d_grad, DIM_X, DIM_Y, DELTA_X, DELTA_Y, PADDING, DT);
+    gradientVelocityXQuick CUDA_CALL(GRID, BLOCK) (d_out_u, d_rho, d_u, d_v, d_grad, DIM_X, DIM_Y, DELTA_X, PADDING, DT);
     cudaMemcpy(vel_u_grds, d_out_u, (DIM_X + 2 * PADDING + 1) * (DIM_Y + 2 * PADDING) * sizeof(float), cudaMemcpyDeviceToHost);
 
-    gradientVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out_v, d_rho, d_u, d_v, d_grad, DIM_X, DIM_Y, DELTA_X, DELTA_Y, PADDING, DT);
+    gradientVelocityYQuick CUDA_CALL(GRID, BLOCK) (d_out_v, d_rho, d_u, d_v, d_grad, DIM_X, DIM_Y, DELTA_Y, PADDING, DT);
     cudaMemcpy(vel_v_grds, d_out_v, (DIM_X + 2 * PADDING) * (DIM_Y + 2 * PADDING + 1) * sizeof(float), cudaMemcpyDeviceToHost);
 
     cudaFree(d_rho);
