@@ -12,7 +12,10 @@ REGISTER_OP("QuickAdvectionGradient")
     .Input("vel_u_field: float32")
     .Input("vel_v_field: float32")
     .Input("grad: float32")
-    .Attr("dimensions: int")
+    .Attr("dim_x: int")
+    .Attr("dim_y: int")
+    .Attr("delta_x: float")
+    .Attr("delta_y: float")
     .Attr("padding: int")
     .Attr("timestep: float")
     .Output("field_grds: float32")
@@ -32,7 +35,10 @@ void LaunchQUICKAdvectionScalarGradientKernel(
     float* output_grds, 
     float* vel_u_grds, 
     float* vel_v_grds, 
-    const int dimensions, 
+    const int dim_x, 
+    const int dim_y, 
+    const float delta_x, 
+    const float delta_y,
     const int padding, 
     const float timestep, 
     const float* rho, 
@@ -46,14 +52,18 @@ void LaunchQUICKAdvectionScalarGradientKernel(
 
 class QuickAdvectionOpGradient : public OpKernel {
 private:
-    int dimensions;
+    int dim_x, dim_y;
+    float delta_x, delta_y;
     float timestep;
     int padding;
     
 
 public:
     explicit QuickAdvectionOpGradient(OpKernelConstruction* context) : OpKernel(context) {
-        context->GetAttr("dimensions", &dimensions);
+        context->GetAttr("dim_x", &dim_x);
+        context->GetAttr("dim_y", &dim_y);
+        context->GetAttr("delta_x", &delta_x);
+        context->GetAttr("delta_y", &delta_y);
         context->GetAttr("padding", &padding);
         context->GetAttr("timestep", &timestep);
     }
@@ -83,7 +93,7 @@ public:
         auto v = input_vel_v.flat<float>();
         auto grad = input_grad.flat<float>();
 
-        LaunchQUICKAdvectionScalarGradientKernel(field_grds_flat.data(), vel_u_grds_flat.data(), vel_v_grds_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data(), grad.data());
+        LaunchQUICKAdvectionScalarGradientKernel(field_grds_flat.data(), vel_u_grds_flat.data(), vel_v_grds_flat.data(), dim_x, dim_y, delta_x, delta_y, padding, timestep, field.data(), u.data(), v.data(), grad.data());
     }
 };
 

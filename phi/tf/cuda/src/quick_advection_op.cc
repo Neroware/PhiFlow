@@ -11,7 +11,10 @@ REGISTER_OP("QuickAdvection")
     .Input("field_padded: float32")
     .Input("vel_u_field: float32")
     .Input("vel_v_field: float32")
-    .Attr("dimensions: int")
+    .Attr("dim_x: int")
+    .Attr("dim_y: int")
+    .Attr("delta_x: float")
+    .Attr("delta_y: float")
     .Attr("padding: int")
     .Attr("timestep: float")
     .Attr("field_type: int")
@@ -23,14 +26,15 @@ REGISTER_OP("QuickAdvection")
     });
 
 
-void LaunchQuickDensityKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* rho, const float* u, const float* v);
-void LaunchQuickVelocityXKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
-void LaunchQuickVelocityYKernel(float* output_field, const int dimensions, const int padding, const float timestep, const float* u, const float* v);
+void LaunchQuickDensityKernel(float* output_field, const int dim_x, const int dim_y, const float delta_x, const float delta_y, const int padding, const float timestep, const float* rho, const float* u, const float* v);
+void LaunchQuickVelocityXKernel(float* output_field, const int dim_x, const int dim_y, const float delta_x, const float delta_y, const int padding, const float timestep, const float* u, const float* v);
+void LaunchQuickVelocityYKernel(float* output_field, const int dim_x, const int dim_y, const float delta_x, const float delta_y, const int padding, const float timestep, const float* u, const float* v);
 
 
 class QuickAdvectionOp : public OpKernel {
 private:
-    int dimensions;
+    int dim_x, dim_y;
+    float delta_x, delta_y
     float timestep;
     int field_type;
     int step_type;
@@ -39,7 +43,10 @@ private:
 
 public:
     explicit QuickAdvectionOp(OpKernelConstruction* context) : OpKernel(context) {
-        context->GetAttr("dimensions", &dimensions);
+        context->GetAttr("dim_x", &dim_x);
+        context->GetAttr("dim_y", &dim_y);
+        context->GetAttr("delta_x", &delta_x);
+        context->GetAttr("delta_y", &delta_y);
         context->GetAttr("padding", &padding);
         context->GetAttr("timestep", &timestep);
         context->GetAttr("field_type", &field_type);
@@ -62,11 +69,11 @@ public:
         auto v = input_vel_v.flat<float>();
 
         switch(field_type){
-            case 0: LaunchQuickDensityKernel(output_flat.data(), dimensions, padding, timestep, field.data(), u.data(), v.data());
+            case 0: LaunchQuickDensityKernel(output_flat.data(), dim_x, dim_y, delta_x, delta_y, padding, timestep, field.data(), u.data(), v.data());
                 break;
-            case 1: LaunchQuickVelocityXKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data()); 
+            case 1: LaunchQuickVelocityXKernel(output_flat.data(), dim_x, dim_y, delta_x, delta_y, padding, timestep, u.data(), v.data());
                 break;
-            case 2: LaunchQuickVelocityYKernel(output_flat.data(), dimensions, padding, timestep, u.data(), v.data());
+            case 2: LaunchQuickVelocityYKernel(output_flat.data(), dim_x, dim_y, delta_x, delta_y, padding, timestep, u.data(), v.data());
                 break;
             default:
                 break;

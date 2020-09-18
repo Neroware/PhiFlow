@@ -26,7 +26,7 @@ quick_op_gradient = tf.load_op_library(kernel_path)
 
 
 
-def tf_cuda_quick_advection(field, field_padded, vel_u, vel_v, dt, dim, field_type="density", step_type="explicit_euler"):
+def tf_cuda_quick_advection(field, field_padded, vel_u, vel_v, dt, dim_x, dim_y, delta_x, delta_y, field_type="density", step_type="explicit_euler"):
     """
     Advects the field using the QUICK scheme
     :param field:           Field tensor to advect
@@ -40,11 +40,11 @@ def tf_cuda_quick_advection(field, field_padded, vel_u, vel_v, dt, dim, field_ty
     :return:                Advected field tensor
     """
     if(field_type == "density"):
-        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim, 2, dt, 0, 0)
+        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim_x, dim_y, delta_x, delta_y, 2, dt, 0, 0)
     elif(field_type == "velocity_u"):
-        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim, 2, dt, 1, 0)
+        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim_x, dim_y, delta_x, delta_y, 2, dt, 1, 0)
     elif(field_type == "velocity_v"):
-        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim, 2, dt, 2, 0)
+        return quick_op.quick_advection(field, field_padded, vel_u, vel_v, dim_x, dim_y, delta_x, delta_y, 2, dt, 2, 0)
     print("QUICK Advection: Field type invalid!")
     return None
 
@@ -55,18 +55,21 @@ def _tf_cuda_quick_advection_grad(op, grad):
     rho = op.inputs[1]
     u = op.inputs[2]
     v = op.inputs[3]
-    dimensions = op.get_attr("dimensions")
+    dim_x = op.get_attr("dim_x")
+    dim_y = op.get_attr("dim_y")
+    delta_x = op.get_attr("delta_x")
+    delta_y = op.get_attr("delta_y")
     timestep = op.get_attr("timestep")
     padding = op.get_attr("padding")
-    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(field, rho, u, v, grad, dimensions, padding, timestep)
+    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(field, rho, u, v, grad, dim_x, dim_y, delta_x, delta_y, padding, timestep)
     return [None, grad_rho, grad_u, grad_v]
 
 
-def tf_cuda_quick_density_gradients(density, density_padded, vel_u, vel_v, dt, dim):
-    rho_adv = quick_op.quick_advection(density, density_padded, vel_u, vel_v, dim, 2, dt, 0, 0)
+def tf_cuda_quick_density_gradients(density, density_padded, vel_u, vel_v, dt, dim_x, dim_y, delta_x, delta_y):
+    rho_adv = quick_op.quick_advection(density, density_padded, vel_u, vel_v, dim_x, dim_y, delta_x, delta_y, 2, dt, 0, 0)
     return tf.gradients(rho_adv, [density_padded, vel_u, vel_v])
 
 
-def tf_cuda_quick_density_gradients_to_loss(density, density_padded, vel_u, vel_v, dt, dim, loss):
-    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(density, density_padded, vel_u, vel_v, loss, dim, 2, dt)
+def tf_cuda_quick_density_gradients_to_loss(density, density_padded, vel_u, vel_v, dt, dim_x, dim_y, delta_x, delta_y, loss):
+    grad_rho, grad_u, grad_v = quick_op_gradient.quick_advection_gradient(density, density_padded, vel_u, vel_v, loss, dim_x, dim_y, delta_x, delta_y, 2, dt)
     return [grad_rho, grad_u, grad_v]
