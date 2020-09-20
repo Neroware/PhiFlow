@@ -76,7 +76,7 @@ class TestCase:
             except:
                 density = self.density_field
             dt = self.timestep
-            dim_x = RESOLUTION[0]
+            dim_x = RESOLUTION[0] + 50
             dim_y = RESOLUTION[1]
             tf.compat.v1.reset_default_graph()
         
@@ -89,7 +89,7 @@ class TestCase:
             velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
             with tf.Session("") as sess:
-                grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0)
+                grd_field, grd_u, grd_v = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.5, 1.0)
                 plot_grid(grd_field.eval()[0], self.name, self.name + "_den_grad" + filename_postfix + ".jpg", -0.04, 0.04)
                 plot_grid(grd_u.eval()[0], self.name, self.name + "_u_grad" + filename_postfix + ".jpg", -0.04, 0.04)
                 plot_grid(grd_v.eval()[0], self.name, self.name + "_v_grad" + filename_postfix + ".jpg", -0.04, 0.04)
