@@ -107,7 +107,7 @@ class TestCase:
             except:
                 density = self.density_field
             dt = self.timestep
-            dim_x = RESOLUTION[0]
+            dim_x = RESOLUTION[0] + 50
             dim_y = RESOLUTION[1]
             tf.compat.v1.reset_default_graph()
 
@@ -119,9 +119,9 @@ class TestCase:
             velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
             velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
 
-            den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="density")
-            vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="velocity_u")
-            vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.0, 1.0, field_type="velocity_v")
+            den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.5, 1.0, field_type="density")
+            vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.5, 1.0, field_type="velocity_u")
+            vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim_x, dim_y, 1.5, 1.0, field_type="velocity_v")
 
             with tf.Session("") as sess:
                 self.density_field = CenteredGrid(den.eval())
@@ -288,7 +288,7 @@ TEST_CASES = []
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -304,7 +304,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -321,7 +321,7 @@ TEST_CASES.append(case_1)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -337,7 +337,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([0.1 * math.sin(0.02 * PI * y), 0.1 * math.sin(0.02 * PI * x)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -354,7 +354,7 @@ TEST_CASES.append(case_2)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         vx = x - 50
         vy = y - 50
         if(vx == 0.0 and vy == 0.0):
@@ -373,7 +373,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([0.005 * (y - 50), 0.005 * (x - 50)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -390,7 +390,7 @@ TEST_CASES.append(case_3)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         vx = x - 50
         vy = y - 50
         if(vx == 0.0 and vy == 0.0):
@@ -409,7 +409,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([0.005 * (y - 50), 0.005 * (x - 50)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -426,7 +426,7 @@ TEST_CASES.append(case_4)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         vx = x - 50
         vy = y - 50
         if(vx == 0.0 and vy == 0.0):
@@ -445,7 +445,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([-0.2, 0.1])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -462,7 +462,7 @@ TEST_CASES.append(case_5)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         vx = x - 50
         vy = y - 50
         if(vx == 0.0 and vy == 0.0):
@@ -481,7 +481,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         next.append([-0.005 * (y - 50), -0.005 * (x - 50)])
     data.append(next)
 velocity_array = np.array([data], dtype="float32")
@@ -499,7 +499,7 @@ TEST_CASES.append(case_6)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -515,7 +515,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.1, 0.2])
         else:
@@ -535,7 +535,7 @@ TEST_CASES.append(case_7a)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -551,7 +551,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([-0.1, 0.2])
         else:
@@ -571,7 +571,7 @@ TEST_CASES.append(case_7b)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -587,7 +587,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([-0.1, -0.2])
         else:
@@ -607,7 +607,7 @@ TEST_CASES.append(case_7c)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -623,7 +623,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.1, -0.2])
         else:
@@ -644,7 +644,7 @@ TEST_CASES.append(case_7d)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -660,7 +660,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.2, 0.1])
         else:
@@ -680,7 +680,7 @@ TEST_CASES.append(case_8a)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -696,7 +696,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.2, -0.1])
         else:
@@ -716,7 +716,7 @@ TEST_CASES.append(case_8b)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -732,7 +732,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([-0.2, -0.1])
         else:
@@ -752,7 +752,7 @@ TEST_CASES.append(case_8c)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -768,7 +768,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([-0.2, 0.1])
         else:
@@ -789,7 +789,7 @@ TEST_CASES.append(case_8d)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -805,7 +805,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([-0.2, 0.0])
         else:
@@ -825,7 +825,7 @@ TEST_CASES.append(case_9)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -841,7 +841,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.0, -0.2])
         else:
@@ -861,7 +861,7 @@ TEST_CASES.append(case_10)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -877,7 +877,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x >= 40 and x < 60 and y >= 40 and y < 60):
             next.append([0.1, -0.1])
         else:
@@ -897,7 +897,7 @@ TEST_CASES.append(case_11)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -913,7 +913,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         u = 0.2 * EXP0 ** -((2*(0.03125*x-1))**2)
         next.append([0.0, u])
     data.append(next)
@@ -931,7 +931,7 @@ TEST_CASES.append(case_12)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -947,7 +947,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         if(x <= 20):
             next.append([0.0, 0.2])
         else:
@@ -966,7 +966,7 @@ TEST_CASES.append(case_13)
 data = []
 for y in range(0, RESOLUTION[0]):
     next = []
-    for x in range(0, RESOLUTION[0]):
+    for x in range(0, RESOLUTION[0] + 50):
         if x % 8 <= 3 and y % 8 <= 3:
             next.append([0.1])
         elif x % 8 > 3 and y % 8 <= 3:
@@ -982,7 +982,7 @@ density_field = CenteredGrid(density_array)
 data = []
 for y in range(0, RESOLUTION[0] + 1):
     next = []
-    for x in range(0, RESOLUTION[0] + 1):
+    for x in range(0, RESOLUTION[0] + 1 + 50):
         #u = 0.2 * EXP0 ** -((2*(0.0625*x-1))**2) + 0.1 * EXP0 ** -((2*(0.0625*(x-18)-1))**2)
         u = 0.0
         if(x >= 5 and x <= 10):
