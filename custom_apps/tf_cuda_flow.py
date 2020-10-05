@@ -3,7 +3,7 @@ if not 'tf' in sys.argv:
     raise RuntimeError("This simulation can only be run in TensorFlow-Mode!")
 from phi.tf.flow import *  # Use TensorFlow
 MODE = 'TensorFlow'
-RESOLUTION = [int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
+RESOLUTION = [100] * 2 #[int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
 DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
 from phi.tf.app import App
@@ -35,8 +35,7 @@ class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
         self.physics = SimpleFlowPhysics()
-        #self.physics = SemiLangFlowPhysics()
-        self.timestep = 1.0
+        self.timestep = 0.1
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:100, 0:100], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
         fluid.density = self._get_density_grid()
@@ -49,6 +48,8 @@ class CUDAFlow(App):
         density = self.fluid.density
         dt = self.timestep
         dim = RESOLUTION[0]
+        delta = 1.0
+        
         # Setting up tensors
         density_tensor = tf.constant(density.data)
         density_tensor_padded = tf.constant(density.padded(2).data)
@@ -57,16 +58,11 @@ class CUDAFlow(App):
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
-        # Compute Gradients
-        #grds = tf_cuda_quick_density_gradients(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim)
-        #print("Gradient: ", grds)
-        #with tf.Session("") as sess:
-        #    for grd in grds:
-        #        print(">>> Grd.: ", grd.eval())
-        #    sess.close()
-        den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-        vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
-        vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
+        
+        # Perform QUICK Advection Step 
+        den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, delta, delta, field_type="density")
+        vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, delta, delta, field_type="velocity_u")
+        vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, delta, delta, field_type="velocity_v")
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
             self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
@@ -143,15 +139,14 @@ class CUDAFlow(App):
 
     def _get_velocity_grid(self):
         """
-        Generates a StaggeredGrid, with constant velocity u = (0, 1)
+        Generates a StaggeredGrid, with a sine velocity distribution
         """
         data = []
         for y in range(0, RESOLUTION[0] + 1):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
                 dim = RESOLUTION[0]
-                next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
-
+                next.append([0.1 * math.sin((2.0 / RESOLUTION[0]) * PI * y), 0.1 * math.sin((2.0 / RESOLUTION[0]) * PI * x)])
             data.append(next)
         velocity_grid = np.array([data], dtype="float32")
         return StaggeredGrid(velocity_grid)

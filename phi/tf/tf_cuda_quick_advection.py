@@ -34,7 +34,10 @@ def tf_cuda_quick_advection(field, field_padded, vel_u, vel_v, dt, dim_x, dim_y,
     :param vel_u:           Padded Velocity u tensor
     :param vel_v:           Padded Velocity v tensor
     :param dt:              Timestep
-    :param dim:             Dimension
+    :param dim_x:           Horizontal Field Dimension
+    :param dim_y:           Vertical Field Dimension
+    :param delta_x:         Horizontal cell center distance
+    :param delta_y:         Vertical cell center distance
     :param field_type:      density, velocity_u, velocity_v
     :param step_type:       explicit_euler (only euler supported)
     :return:                Advected field tensor

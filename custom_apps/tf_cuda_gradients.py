@@ -3,7 +3,7 @@ if not 'tf' in sys.argv:
     raise RuntimeError("This simulation can only be run in TensorFlow-Mode!")
 from phi.tf.flow import *  # Use TensorFlow
 MODE = 'TensorFlow'
-RESOLUTION = [int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
+RESOLUTION = [8] * 2 #[int(sys.argv[1])] * 2 if len(sys.argv) > 1 and __name__ == '__main__' else [128] * 2
 DESCRIPTION = "Basic fluid test that runs QUICK Scheme with CUDA"
 
 from phi.tf.app import App
@@ -57,7 +57,6 @@ class CUDAFlow(App):
     def __init__(self):
         App.__init__(self, 'CUDA Flow', DESCRIPTION, summary='fluid' + 'x'.join([str(d) for d in RESOLUTION]), framerate=20) 
         self.physics = SimpleFlowPhysics()
-        #self.physics = SemiLangFlowPhysics()
         self.timestep = 0.1
         fluid = self.fluid = world.add(Fluid(Domain(RESOLUTION, box=box[0:8, 0:8], boundaries=OPEN), buoyancy_factor=0.0), physics=self.physics)
         fluid.velocity = self._get_velocity_grid()
@@ -72,11 +71,11 @@ class CUDAFlow(App):
         dt = self.timestep
         dim = RESOLUTION[0]
 
-        # Do the Machine Learning
+        # Machine Learning with Gradient Descent
         self._gradient_descent_quick(density, velocity, dt, dim)
         self._gradient_descent_semi_lagrange(density, velocity, dt)
 
-        # This is ugly but I but since this is siumlation code it's not too bad
+        # Init tensors
         density_tensor = tf.constant(density.data)
         density_tensor_padded = tf.constant(density.padded(2).data)
         velocity_v_field, velocity_u_field = velocity.data
@@ -84,10 +83,11 @@ class CUDAFlow(App):
         velocity_u_tensor = tf.constant(velocity_u_field.data)
         velocity_v_tensor_padded = tf.constant(velocity_v_field.padded(2).data)
         velocity_u_tensor_padded = tf.constant(velocity_u_field.padded(2).data)
-        # Perform QUICK step
-        den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-        vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_u")
-        vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="velocity_v")
+
+        # Perform QUICK Advection Step
+        den = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, 1.0, 1.0, field_type="density")
+        vel_u = tf_cuda_quick_advection(velocity_u_tensor, velocity_u_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, 1.0, 1.0, field_type="velocity_u")
+        vel_v = tf_cuda_quick_advection(velocity_v_tensor, velocity_v_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, 1.0, 1.0, field_type="velocity_v")
         with tf.Session("") as sess:
             self.fluid.density = CenteredGrid(den.eval())
             self.fluid.velocity = to_staggered_grid(vel_u.eval()[0], vel_v.eval()[0], dim)
@@ -112,22 +112,21 @@ class CUDAFlow(App):
         plot_grid(velocity_v_field.data[0], "tf_cuda_grad/sl/tf_cuda_init_v.jpg", -0.4, 0.4)
         plot_grid(velocity_u_field.data[0], "tf_cuda_grad/sl/tf_cuda_init_u.jpg", -0.4, 0.4)
         plot_grid(self._get_target_field().data[0], "tf_cuda_grad/sl/tf_cuda_target.jpg", -0.4, 0.4)
-        # Computation
+
         rho_adv = semi_lagrangian(density_field, velocity_field, dt).data
-        y = target_field - rho_adv
-        # Create Optimizer
+        L = target_field - rho_adv
         optimizer = tf.train.GradientDescentOptimizer(0.1)
-        train = optimizer.minimize(y)
+        train = optimizer.minimize(L)
         print("Got training results:\n ", train)
-        # Evaluate
+
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         sess.run(train)
-        result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, y))
+        result = sess.run((density_tensor, velocity_u_tensor, velocity_v_tensor, L))
         plot_grid(result[0][0], "tf_cuda_grad/sl/tf_cuda_grad_rho.jpg", -0.4, 0.4)
         plot_grid(result[1][0], "tf_cuda_grad/sl/tf_cuda_grad_u.jpg", -0.4, 0.4)
         plot_grid(result[2][0], "tf_cuda_grad/sl/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        plot_grid(result[3][0], "tf_cuda_grad/sl/tf_cuda_grad_y.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/sl/tf_cuda_grad_Loss.jpg", -0.4, 0.4)
         print(result)
         print("=====================================")
 
@@ -145,23 +144,21 @@ class CUDAFlow(App):
         plot_grid(velocity_v_field.data[0], "tf_cuda_grad/quick/tf_cuda_init_v.jpg", -0.4, 0.4)
         plot_grid(velocity_u_field.data[0], "tf_cuda_grad/quick/tf_cuda_init_u.jpg", -0.4, 0.4)
         plot_grid(self._get_target_field().data[0], "tf_cuda_grad/quick/tf_cuda_target.jpg", -0.4, 0.4)
-        # Computation
-        rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, field_type="density")
-        y = target - rho_adv
-        # Create Optimizer
+
+        rho_adv = tf_cuda_quick_advection(density_tensor, density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, dt, dim, dim, 1.0, 1.0, field_type="density")
+        L = target - rho_adv
         optimizer = tf.train.GradientDescentOptimizer(0.1)
-        print("(i) Created optimizer: ", optimizer)
-        train = optimizer.minimize(y)
+        train = optimizer.minimize(L)
         print("Got training results:\n ", train)
-        # Evaluate
+        
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         sess.run(train)
-        result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, y))
+        result = sess.run((density_tensor_padded, velocity_u_tensor_padded, velocity_v_tensor_padded, L))
         plot_grid(result[0][0], "tf_cuda_grad/quick/tf_cuda_grad_rho.jpg", -0.4, 0.4)
         plot_grid(result[1][0], "tf_cuda_grad/quick/tf_cuda_grad_u.jpg", -0.4, 0.4)
         plot_grid(result[2][0], "tf_cuda_grad/quick/tf_cuda_grad_v.jpg", -0.4, 0.4)
-        plot_grid(result[3][0], "tf_cuda_grad/quick/tf_cuda_grad_diff.jpg", -0.4, 0.4)
+        plot_grid(result[3][0], "tf_cuda_grad/quick/tf_cuda_grad_Loss.jpg", -0.4, 0.4)
         print(result)
         print("=====================================")
 
@@ -175,10 +172,7 @@ class CUDAFlow(App):
             next = []
             for x in range(0, RESOLUTION[0] + 1):
                 dim = RESOLUTION[0]
-                #next.append([0.1 * math.sin((2.0 / dim) * PI * y), 0.1 * math.sin((2.0 / dim) * PI * x)])
-                #next.append([0.1 * math.sin((1.0 / dim) * PI * y), 0.1 * math.sin((1.0 / dim) * PI * x)])
                 next.append([0.1, 0.1])
-
             data.append(next)
         velocity_grid = np.array([data], dtype="float32")
         return StaggeredGrid(velocity_grid)
